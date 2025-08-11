@@ -140,3 +140,7 @@ vite.config.ts.timestamp-*
 
 #Variables 
 .env
+
+/front-rto
+/dist
+/node_modules
