@@ -1,42 +1,65 @@
-import { useCallback } from 'react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import logo from "../assets/logo.png"; // logo da empresa
 
 export const usePdfGenerator = () => {
-  const generatePdf = useCallback((data) => {
+  const generatePdf = (topicos, respostas) => {
     const doc = new jsPDF();
+    let yOffset = 10;
 
-    doc.setFontSize(18);
-    doc.text('Relatório de Auditoria', 14, 22);
+    // === PEGA DADOS DA EMPRESA DO LOCALSTORAGE ===
+    let empresaInfo = null;
+    try {
+      const empresaStorage = localStorage.getItem("empresaSelecionanda");
+      if (empresaStorage) {
+        const parsed = JSON.parse(empresaStorage);
+        empresaInfo = parsed?.cliente || null;
+      }
+    } catch (err) {
+      console.error("Erro ao recuperar empresa:", err);
+    }
 
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text(`Data: ${new Date().toLocaleDateString()}`, 14, 30);
+    // === LOGO ===
+    doc.addImage(logo, "PNG", 10, yOffset, 30, 15);
+    yOffset += 20;
 
-    const startY = 40;
+    // === TÍTULO ===
+    doc.setFontSize(16);
+    doc.text("Relatório de Auditoria", 105, yOffset, { align: "center" });
+    yOffset += 10;
 
-    const columns = [
-      { header: 'Pergunta', dataKey: 'pergunta' },
-      { header: 'Resposta', dataKey: 'resposta' },
-      { header: 'Comentário', dataKey: 'comentario' },
-    ];
+    // === DADOS DA EMPRESA ===
+    if (empresaInfo) {
+      doc.setFontSize(12);
+      doc.text(`Empresa: ${empresaInfo.razao_social || "N/D"}`, 10, yOffset);
+      yOffset += 6;
+      if (empresaInfo.cnpj) {
+        doc.text(`CNPJ: ${empresaInfo.cnpj}`, 10, yOffset);
+        yOffset += 6;
+      }
+      if (empresaInfo.endereco) {
+        doc.text(`Endereço: ${empresaInfo.endereco}`, 10, yOffset);
+        yOffset += 6;
+      }
+    }
 
-    const rows = data.respostas.map(r => ({
-      pergunta: r.descricao_pergunta || r.pergunta || '---',
-      resposta: r.st_pergunta || r.resposta || '---',
-      comentario: r.comentario || '-',
-    }));
+    // === DATA ===
+    const dataAtual = new Date().toLocaleString();
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${dataAtual}`, 105, yOffset, { align: "center" });
+    yOffset += 10;
 
-    doc.autoTable({
-      startY,
-      head: [columns.map(col => col.header)],
-      body: rows.map(row => columns.map(col => row[col.dataKey])),
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [247, 125, 51] },
-    });
+    // === CALCULAR RESULTADO GERAL ===
+    let somaPercentuais = 0;
+    let topicosComRespostas = 0;
 
-    doc.save('relatorio_auditoria.pdf');
-  }, []);
+   
+    // Visualizar o PDF
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    window.open(url);
+
+  };
 
   return { generatePdf };
 };

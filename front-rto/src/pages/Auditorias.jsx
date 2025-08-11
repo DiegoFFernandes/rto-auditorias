@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuditoria } from '../hooks/useAuditoria';
+import { usePdfGenerator } from '../hooks/usePdfGenerator'
 
 import Radio from '@mui/material/Radio';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -35,11 +36,7 @@ const Auditorias = () => {
     handleBack,
   } = useAuditoria();
 
-  // EM DESENVOLVIMENTO
-  const generatePdf = () => { 
-    console.log('EM DESENVOLVIMENTO');
-  }
-
+  const { generatePdf } = usePdfGenerator();
 
   if (saveMessage === 'Auditoria salva com sucesso!') {
     return (
@@ -54,7 +51,7 @@ const Auditorias = () => {
                 Ir para a Home
               </Link>
               <button
-                onClick={generatePdf}
+                onClick={() => generatePdf(topicos, respostas)}
                 className="nav-button next"
               >
                 <PictureAsPdfIcon className="nav-icon" />
