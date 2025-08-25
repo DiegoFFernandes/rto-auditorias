@@ -1,55 +1,13 @@
-.lista-auditoria-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.lista-auditoria-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #343a40;
-}
-
-.voltar {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 0.95rem;
-  color: #580f34;
-  background-color: transparent;
-  border: 2px solid #580f34;
-  padding: 8px 15px;
-  border-radius: 5px;
-  transition: all 0.3s ease;
-}
-
-.voltar:hover {
-  color: #fff;
-  background-color: #580f34;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.placeholder {
-  width: 78px;
+.lista-auditorias-container {
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .container {
-  max-width: 1100px;
-  margin: 40px auto;
-  padding: 0 20px;
-}
-
-.container h1 {
-  margin-bottom: 20px;
-  color: #580f34;
-  font-size: 28px;
-  text-align: center;
+  width: 100%;
+  max-width: 1100px; /* Largura máxima para o conteúdo */
+  margin: 20px auto 0 auto; /* Centraliza o bloco de conteúdo */
 }
 
 .tabela-container {
@@ -75,6 +33,7 @@ thead th {
   color: white;
   padding: 12px;
   text-align: left;
+  cursor: pointer;
 }
 
 tbody td {
@@ -84,20 +43,6 @@ tbody td {
 
 tbody tr:hover {
   background-color: #f9f9f9;
-}
-
-td button {
-  background-color: #007bff;
-  color: white;
-  padding: 6px 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-td button:hover {
-  background-color: #0056b3;
 }
 
 .filtro-container {
@@ -131,15 +76,17 @@ td button:hover {
   align-items: center;
 }
 
-.tabela-acoes button {
-  padding: 8px 12px;
-  border-radius: 5px;
-  font-weight: bold;
-}
-
 .btn-pdf {
   background-color: #dc3545;
   color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-pdf:hover {
@@ -181,12 +128,10 @@ td button:hover {
 }
 
 @media (max-width: 600px) {
-    /* Esconde o cabeçalho da tabela no mobile */
     thead {
         display: none;
     }
 
-    /* Cada linha da tabela se torna um cartão */
     tbody tr {
         display: flex;
         flex-direction: column;
@@ -194,95 +139,50 @@ td button:hover {
         padding: 15px;
         border: 1px solid #ddd;
         border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); /* Sombra mais destacada */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
         background-color: #fff;
     }
 
-    /* Transforma as células da tabela em blocos e as organiza */
     tbody td {
         display: flex;
-        justify-content: space-between; /* Alinha o rótulo e o valor */
+        justify-content: space-between;
         align-items: center;
         padding: 8px 0;
-        border-bottom: 1px solid #eee; /* Linha sutil para separar os campos */
+        border-bottom: 1px solid #eee;
     }
 
-    /* Remove a borda da última célula para um visual mais limpo */
     tbody tr td:last-of-type {
         border-bottom: none;
     }
 
-    /* Pseudo-elemento para o rótulo (Empresa, CNPJ, Data, etc.) */
     tbody td::before {
         content: attr(data-label);
-        font-weight: 600; /* Aumenta a espessura da fonte para o rótulo */
+        font-weight: 600;
         text-transform: uppercase;
         color: #580f34;
-        font-size: 13px; /* Tamanho da fonte menor para o rótulo */
+        font-size: 13px;
     }
-    
-    /* Melhora o layout dos botões de ação */
+
     .tabela-acoes {
         display: flex;
-        flex-direction: column; /* Botões um abaixo do outro */
+        flex-direction: column;
         width: 100%;
         margin-top: 10px;
         padding-top: 10px;
         border-top: 1px solid #ddd;
     }
 
-    .tabela-acoes button {
-        width: 100%; /* Botões ocupam a largura total */
-        margin-bottom: 10px; /* Espaçamento entre os botões */
+    .tabela-acoes .btn-pdf {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
     }
 
     .tabela-acoes button:last-of-type {
         margin-bottom: 0;
     }
 
-    /* Oculta os ícones de ordenação, pois não são relevantes no mobile */
     th span {
         display: none;
     }
 }
-
-/* @media (max-width: 600px) {
-  thead {
-    display: none;
-  }
-
-  tbody tr {
-    display: block;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  }
-
-  tbody td {
-    display: block;
-    text-align: right;
-    font-size: 14px;
-    border: none;
-    padding: 8px 15px;
-    position: relative;
-  }
-
-  tbody td::before {
-    content: attr(data-label);
-    float: left;
-    font-weight: bold;
-    text-transform: uppercase;
-    color: #580f34;
-  }
-
-  .tabela-acoes {
-    justify-content: flex-end;
-    border-top: 1px solid #ddd;
-    padding-top: 10px;
-  }
-
-  th span {
-    display: none;
-  }
-} */

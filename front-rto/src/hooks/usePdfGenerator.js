@@ -1,9 +1,11 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import autoTable from "jspdf-autotable"; // <- Importação corrigida
 // import logo from "../assets/logo3.png"; // logo da empresa
 
 export const usePdfGenerator = () => {
-  const generatePdf = (topicos, respostas, empresaInfo, auditoriaInfo) => {
+  const generatePdf = (topicos, respostas, empresaInfo, auditoriaInfo, fotos, comentario) => {
+    console.log('xabalaaaaaaaa', comentario);
+
     const doc = new jsPDF();
     let yOffset = 10;
 
@@ -41,6 +43,13 @@ export const usePdfGenerator = () => {
     doc.setFontSize(10);
     doc.text(`Gerado em: ${dataAtual}`, 105, yOffset, { align: "center" });
     yOffset += 5;
+
+    // Adiciona a observação da auditoria se ela existir
+    if (auditoriaInfo.observacao) {
+      // Alinha o texto à esquerda (x=10)
+      doc.text(`Observação Geral: ${auditoriaInfo.observacao}`, 10, yOffset, { align: "left" });
+      yOffset += 5;
+    }
 
     // === CALCULAR RESULTADO GERAL ===
     let somaPercentuais = 0;
@@ -120,15 +129,16 @@ export const usePdfGenerator = () => {
       }
 
       // Tabela de perguntas/respostas 
-      const tableData = perguntasDoTopico.map(p => [
-        p.ordem_pergunta,
-        p.descricao_pergunta,
-        respostas[p.id] === 'CF' ? 'Conforme'
+      const tableData = perguntasDoTopico.map(p => {
+        const respostaTexto = respostas[p.id] === 'CF' ? 'Conforme'
           : respostas[p.id] == 'PC' ? 'Conformidade Parcial'
             : respostas[p.id] === 'NC' ? 'Não Conforme'
               : respostas[p.id] === 'NE' ? 'Não Existe'
-                : 'Não Respondido'
-      ]);
+                : 'Não Respondido';
+        // Adiciona o comentário à mesma célula da resposta
+        const comentarioDaPergunta = comentario[p.id] ? `\n(Obs: ${comentario[p.id]})` : '';
+        return [p.ordem_pergunta, p.descricao_pergunta, `${respostaTexto}${comentarioDaPergunta}`];
+      });
 
       autoTable(doc, {
         head: [["#", "Pergunta", "Resposta"]],
@@ -140,6 +150,35 @@ export const usePdfGenerator = () => {
       });
 
       yOffset = doc.lastAutoTable.finalY + 5;
+
+      // Adiciona a lógica para inserir as fotos aqui
+      perguntasDoTopico.forEach(p => {
+        const fotosDaPergunta = fotos[p.id.toString()] || [];
+        if (fotosDaPergunta.length > 0) {
+          yOffset += 5;
+          doc.setFontSize(10);
+          doc.text(`Evidências - Pergunta ${p.ordem_pergunta}`, 10, yOffset);
+          yOffset += 5;
+
+          const imgWidth = 50;
+          const imgHeight = (imgWidth * 3) / 4;
+
+          fotosDaPergunta.forEach((fotoUrl, index) => {
+            const x = 10 + (index % 3) * 60;
+            if (yOffset + imgHeight > doc.internal.pageSize.height - 30) {
+              doc.addPage();
+              yOffset = 20;
+            }
+            const fullImageUrl = `${import.meta.env.VITE_API_URL}${fotoUrl}`;
+            doc.addImage(fullImageUrl, 'JPEG', x, yOffset, imgWidth, imgHeight);
+            if ((index + 1) % 3 === 0) {
+              yOffset += imgHeight + 5;
+            }
+          });
+          yOffset += (fotosDaPergunta.length % 3 !== 0) ? imgHeight + 5 : 0;
+        }
+      });
+
     });
 
     // === RODAPÉ ===
@@ -151,16 +190,15 @@ export const usePdfGenerator = () => {
 
     // Visualizar o PDF
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    console.log("Safari:", isSafari);
 
     if (isSafari) {
-      doc.save(`auditoria-${empresaInfo.razao_social}.pdf`);      
+      doc.open(`auditoria-${empresaInfo.razao_social}.pdf`);
 
       setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } else {
       const blob = doc.output("blob");
       const blobUrl = URL.createObjectURL(blob);
-  
+
       window.open(blobUrl, "_blank");
     }
   };

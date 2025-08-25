@@ -1,4 +1,3 @@
-'use strict';
 const ClienteModel = require('../models/Clientes.Model');
 
 const cadastrarCliente = async (dados) => {

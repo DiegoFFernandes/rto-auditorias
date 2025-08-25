@@ -29,7 +29,7 @@ const TelaInicial = () => {
           {/* Opção 3: Ver Auditorias */}
           <Link to="/listar-auditorias" className="card-opcao">
             <FontAwesomeIcon icon={faClipboardList} />
-            <h3>Listar Auditorias</h3>
+            <h3>Consultar Auditorias</h3>
             <p>Consulte auditorias  existentes</p>
           </Link> 
         </div>

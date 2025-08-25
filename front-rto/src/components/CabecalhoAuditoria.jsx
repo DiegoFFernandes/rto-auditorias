@@ -6,7 +6,7 @@ const CabecalhoAuditoria = () => {
   const [auditoriaData, setAuditoriaData] = useState(null);
 
   useEffect(() => {
-    const savedData = localStorage.getItem('empresaSelecionanda');
+    const savedData = localStorage.getItem('empresa-selecionada');
     if (savedData) {
       setAuditoriaData(JSON.parse(savedData));
     }
@@ -36,7 +36,7 @@ const CabecalhoAuditoria = () => {
         <strong>Data de Início:</strong> {dataFormatada}
       </p>
       <p>
-        <strong>Observações:</strong> {auditoria.observacoes}
+        <strong>Observações:</strong> {auditoria.observacao_geral}
       </p>
     </div>
   );

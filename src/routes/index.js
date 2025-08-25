@@ -6,14 +6,14 @@ const clienteRoutes = require('./clientes/index');
 const topicoRoutes = require('./topicos/index');
 const perguntasRoutes = require('./perguntas/index');
 const auditoriaRoutes = require('./auditorias/index');
-const uploadRoutes = require('./fotos/index')
+const uploadRoutes = require('./evidencias/index')
 
 router.use('/usuarios', userRoutes);
 router.use('/clientes', clienteRoutes);
 router.use('/topicos', topicoRoutes);
 router.use('/perguntas', perguntasRoutes);
 router.use('/auditorias', auditoriaRoutes);
-router.use('/uploads', uploadRoutes);
+router.use('/evidencias', uploadRoutes);
 
 
 router.get('/', (_req, res) => {

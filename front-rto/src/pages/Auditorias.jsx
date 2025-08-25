@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuditoria } from '../hooks/useAuditoria';
 import { usePdfGenerator } from '../hooks/usePdfGenerator';
 
@@ -6,7 +5,8 @@ import AuditoriasLoading from '../components/Auditoria/AuditoriasLoading';
 import AuditoriaConcluida from '../components/Auditoria/AuditoriaConcluida';
 import AuditoriaTopicos from '../components/Auditoria/AuditoriaTopicos';
 import AuditoriaPerguntas from '../components/Auditoria/AuditoriaPerguntas';
-import AuditoriaNavegacao from '../components/Auditoria/AuditoriaNavegação';
+import AuditoriaEvidencias from '../components/Auditoria/AuditoriaEvidencias';
+import AuditoriaNavegacao from '../components/Auditoria/AuditoriaNavegacao';
 import CabecalhoAuditoria from '../components/CabecalhoAuditoria';
 
 import '../styles/Auditorias/index.css';
@@ -29,9 +29,16 @@ const Auditorias = () => {
     respostas,
     empresaInfo,
     auditoriaInfo,
+    fotos,
+    observacoes,
+
     handleRespostaChange,
     handleNext,
     handleBack,
+    handleFotoChange,
+    handleObservacaoChange,
+    handleRemoveFoto,
+    fileInputRef,
   } = useAuditoria();
 
   const { generatePdf } = usePdfGenerator();
@@ -41,14 +48,16 @@ const Auditorias = () => {
   }
 
   if (saveMessage === 'Auditoria salva com sucesso!') {
-    const handleGerarPdf = () => generatePdf(topicos, respostas, empresaInfo, auditoriaInfo);
+    const handleGerarPdf = () => generatePdf(topicos, respostas, empresaInfo, auditoriaInfo, fotos, observacoes);
     return <AuditoriaConcluida onGerarPdf={handleGerarPdf} />;
   }
 
   if (topicos.length === 0) {
     return (
       <div className="auditorias-page">
-        <p>Nenhum tópico de auditoria encontrado.</p>
+        <div className="auditorias-container">
+          <p className="loading-text">Nenhum tópico de auditoria encontrado.</p>
+        </div>
       </div>
     );
   }
@@ -74,6 +83,15 @@ const Auditorias = () => {
             respostaSelecionada={respostas[currentQuestion.id]}
             onRespostaChange={handleRespostaChange}
           />
+          <AuditoriaEvidencias
+            questionId={currentQuestion.id}
+            fotos={fotos?.[currentQuestion.id] || []}
+            observacao={observacoes?.[currentQuestion.id] || ""}
+            handleFotoChange={handleFotoChange}
+            handleObservacaoChange={handleObservacaoChange}
+            handleRemoveFoto={handleRemoveFoto}
+            fileInputRef={fileInputRef}
+          />
           <AuditoriaNavegacao
             onVoltar={handleBack}
             onAvancar={handleNext}
@@ -82,9 +100,8 @@ const Auditorias = () => {
             textoBotaoAvancar={buttonText}
             salvando={isSaving}
             indicePergunta={activeQuestionIndex}
-            totalPerguntas={currentTopic.perguntas.length}
+            totalPerguntas={currentTopic?.perguntas.length}
           />
-
           {resultadoParcialTopico && (
             <div className="resultado-parcial-container" style={{ backgroundColor: resultadoParcialTopico.cor }}>
               <div className="resultado-parcial-conteudo">

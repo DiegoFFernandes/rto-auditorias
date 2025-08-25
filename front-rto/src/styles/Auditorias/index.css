@@ -22,6 +22,10 @@ body {
   background-color: var(--background-page);
 }
 
+.auditorias-page {
+  padding: 0.5rem;
+}
+
 .global-progress-bar {
   position: fixed;
   top: 0;
@@ -274,37 +278,6 @@ body {
   text-align: center;
 }
 
-@media (max-width: 800px) { 
-  .auditoria-card,
-  .loading-card,
-  .success-card {
-    padding: 15px;    
-    margin: 10px;
-    max-width: 600px;
-  }
-
-  .card-header-v2 {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .topic-title {
-    font-size: 1.2rem;
-  }
-
-  .topic-subtitle {
-    font-size: 0.9rem;
-  }
-
-  .question-title {
-    font-size: 1rem;
-  }
-
-  .question-description {
-    font-size: 0.9rem;
-  }
-}
-
 .success-actions {
   display: flex;
   justify-content: center;
@@ -341,4 +314,90 @@ body {
 
 .success-actions .nav-icon {
   font-size: 1.25rem;
+}
+
+@media screen and (max-width: 768px) {
+  /*
+    Ajustes para tablets e telas menores (<= 768px)
+  */
+
+  .auditorias-page {
+    padding: 0 1rem; /* Adiciona um padding nas laterais */
+  }
+
+  .auditoria-card,
+  .loading-card,
+  .success-card {
+    margin: 1rem 0; /* Ajusta a margem para preencher a tela */
+    padding: 1.5rem;
+    box-shadow: none; /* Remove a sombra para um visual mais limpo */
+  }
+
+  .topic-title {
+    font-size: 1.25rem; /* Diminui o título do tópico */
+  }
+
+  .topic-progress-bar-container {
+    height: 18px; /* Altura um pouco menor */
+  }
+
+  .question-title {
+    font-size: 1.1rem; /* Diminui o título da pergunta */
+  }
+
+  .question-description {
+    font-size: 0.95rem; /* Diminui a descrição da pergunta */
+    margin-bottom: 1rem;
+  }
+
+  .navigation-container {
+    flex-direction: column-reverse; /* Empilha os botões na vertical */
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .nav-button {
+    width: 100%; /* Botões com largura total para facilitar o clique */
+    justify-content: center;
+  }
+
+  .question-counter {
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .success-actions {
+    flex-direction: column; /* Empilha os botões de ação final */
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  /*
+    Ajustes específicos para celulares (<= 480px)
+  */
+  
+  .auditoria-card,
+  .loading-card,
+  .success-card {
+    padding: 1rem; /* Reduz ainda mais o padding */
+  }
+
+  .topic-title {
+    font-size: 1.1rem;
+  }
+
+  .question-title {
+    font-size: 1rem;
+  }
+
+  .question-description {
+    font-size: 0.9rem;
+  }
+
+  .nav-button {
+    padding: 0.75rem; /* Diminui o padding dos botões */
+    font-size: 0.85rem;
+  }
 }

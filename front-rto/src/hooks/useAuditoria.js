@@ -1,11 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
-import api from '../api/api';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { toast } from 'react-toastify';
 
+import api from '../api/api';
 const idUsuarioExemplo = 1;
 let idClienteFinal = 0;
 
 const LOCAL_STORAGE_RESPOSTAS_KEY = 'auditoria-respostas-em-andamento';
 const LOCAL_STORAGE_POSICAO_KEY = 'auditoria-posicao-em-andamento';
+const LOCAL_STORAGE_FOTOS_KEY = 'auditoria-fotos-em-andamento';
+const LOCAL_STORAGE_OBSERVACOES_KEY = 'auditoria-observacoes-em-andamento';
+const EMPRESA_SELECIONADA = 'empresa-selecionada';
 
 export const useAuditoria = () => {
   const [topicos, setTopicos] = useState([]);
@@ -44,6 +48,104 @@ export const useAuditoria = () => {
   const [empresaInfo, setEmpresaInfo] = useState(null);
   const [auditoriaInfo, setAuditoriaInfo] = useState(null);
 
+  const [fotos, setFotos] = useState(() => {
+    try {
+      const savedFotos = localStorage.getItem(LOCAL_STORAGE_FOTOS_KEY);
+      return savedFotos ? JSON.parse(savedFotos) : {};
+    } catch (error) {
+      console.error('Erro ao carregar fotos do localStorage:', error);
+      return {};
+    }
+  });
+
+  const [observacoes, setObservacoes] = useState(() => {
+    try {
+      const savedObservacoes = localStorage.getItem(LOCAL_STORAGE_OBSERVACOES_KEY);
+      return savedObservacoes ? JSON.parse(savedObservacoes) : {};
+    } catch (error) {
+      console.error('Erro ao carregar observações do localStorage:', error);
+      return {};
+    }
+  });
+
+  const fileInputRef = useRef(null);
+
+  const handleFotoChange = async (perguntaId, file) => {
+    setIsSaving(true);
+    setSaveMessage('Enviando foto...');
+
+    const formData = new FormData();
+    formData.append('foto', file);
+
+    try {
+      // Faz o upload do arquivo para a nova rota '/upload'
+      const uploadResponse = await api.post('/evidencias/upload', formData);
+      const { url } = uploadResponse.data;
+
+      if (!url) {
+        toast.error('Upload não retornou uma URL válida.');
+        return;
+      }
+
+      // Atualiza o estado local de fotos com a URL retornada
+      setFotos((prev) => {
+        const fotosAtuais = prev[perguntaId] || [];
+        return { ...prev, [perguntaId]: [...fotosAtuais, url] };
+      });
+
+      toast.success('Foto enviada e pronta para ser salva!');
+
+    } catch (error) {
+      const errorMessage = error.response && error.response.data && error.response.data.mensagem
+        ? error.response.data.mensagem
+        : 'Erro no upload da foto.';
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
+      setSaveMessage('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveFoto = async (perguntaId, fotoIndex) => {
+    setIsSaving(true);
+
+    const fotosAtuaisDoEstado = fotos[perguntaId] || [];
+    const fotoCaminhoParaDeletar = fotosAtuaisDoEstado[fotoIndex];
+
+    setFotos((prev) => {
+      const fotosAtuais = prev[perguntaId] || [];
+      const fotosAtualizadas = fotosAtuais.filter((_, index) => index !== fotoIndex);
+      return { ...prev, [perguntaId]: fotosAtualizadas };
+    });
+
+    try {
+      if (fotoCaminhoParaDeletar) {
+        await api.delete('/evidencias/apagar', { data: { caminho: fotoCaminhoParaDeletar } });
+        toast.success('Evidencia removida com sucesso.');
+      } else {
+        toast.warn('Caminho da foto não encontrado para remoção no servidor.');
+      }
+    } catch (error) {
+      console.error('Erro ao deletar foto do servidor:', error);
+      const errorMessage = error.response && error.response.data && error.response.data.mensagem
+        ? error.response.data.mensagem
+        : 'Falha ao remover a foto do servidor.';
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleObservacaoChange = (perguntaId, text) => {
+    setObservacoes((prev) => ({ ...prev, [perguntaId]: text }));
+  };
+
   useEffect(() => {
     try {
       localStorage.setItem(LOCAL_STORAGE_RESPOSTAS_KEY, JSON.stringify(respostas));
@@ -54,16 +156,35 @@ export const useAuditoria = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_POSICAO_KEY, JSON.stringify({ activeTopicIndex, activeQuestionIndex }));
+      localStorage.setItem(
+        LOCAL_STORAGE_POSICAO_KEY,
+        JSON.stringify({ activeTopicIndex, activeQuestionIndex })
+      );
     } catch (error) {
       console.error('Erro ao salvar posição no localStorage:', error);
     }
   }, [activeTopicIndex, activeQuestionIndex]);
-  
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_FOTOS_KEY, JSON.stringify(fotos));
+    } catch (error) {
+      console.error('Erro ao salvar fotos no localStorage:', error);
+    }
+  }, [fotos]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_OBSERVACOES_KEY, JSON.stringify(observacoes));
+    } catch (error) {
+      console.error('Erro ao salvar observacoes no localStorage:', error);
+    }
+  }, [observacoes]);
+
   useEffect(() => {
     const iniciarAuditoria = () => {
       try {
-        const clienteStorage = localStorage.getItem('empresaSelecionanda');
+        const clienteStorage = localStorage.getItem('empresa-selecionada');
         if (clienteStorage) {
           const parsed = JSON.parse(clienteStorage);
           setEmpresaInfo(parsed.cliente);
@@ -90,7 +211,7 @@ export const useAuditoria = () => {
   }, []);
 
   const handleRespostaChange = (perguntaId, valor) => {
-    setRespostas(prev => ({
+    setRespostas((prev) => ({
       ...prev,
       [perguntaId]: valor,
     }));
@@ -101,38 +222,39 @@ export const useAuditoria = () => {
     setSaveMessage('Salvando auditoria...');
 
     try {
-      const clienteStorage = localStorage.getItem('empresaSelecionanda');
+      const clienteStorage = localStorage.getItem('empresa-selecionada');
       if (clienteStorage) {
-        try {
-          const parsed = JSON.parse(clienteStorage);
-          if (parsed?.cliente?.id) {
-            idClienteFinal = parsed.cliente.id;
-            setEmpresaInfo(parsed.cliente);
-            setAuditoriaInfo(parsed.auditoria);
-          }
-        } catch (e) {
-          console.error('Erro ao fazer parse:', e);
+        const parsed = JSON.parse(clienteStorage);
+        if (parsed?.cliente?.id) {
+          idClienteFinal = parsed.cliente.id;
         }
       }
 
-      const dataAuditoria = {
+      const payload = {
         auditoriaData: {
           id_usuario: idUsuarioExemplo,
           id_cliente: idClienteFinal,
-          observacao: 'Auditoria concluída.',
+          observacao: auditoriaInfo.observacao_geral,
           dt_auditoria: new Date().toISOString().split('T')[0],
         },
-        respostas: Object.keys(respostas).map(perguntaId => ({
+        respostas: Object.keys(respostas).map((perguntaId) => ({
           id_pergunta: parseInt(perguntaId),
           st_pergunta: respostas[perguntaId],
-          comentario: ''
+          comentario: observacoes[perguntaId] || '',
+          fotos: fotos[perguntaId] || [],
         })),
       };
-      await api.post('/auditorias', dataAuditoria);
+
+      await api.post('/auditorias', payload);
+
       setSaveMessage('Auditoria salva com sucesso!');
 
       localStorage.removeItem(LOCAL_STORAGE_RESPOSTAS_KEY);
       localStorage.removeItem(LOCAL_STORAGE_POSICAO_KEY);
+      localStorage.removeItem(LOCAL_STORAGE_FOTOS_KEY);
+      localStorage.removeItem(LOCAL_STORAGE_OBSERVACOES_KEY);
+      localStorage.removeItem(EMPRESA_SELECIONADA);
+
     } catch (error) {
       console.error('Erro ao salvar auditoria:', error);
       setSaveMessage('Erro ao salvar auditoria. Tente novamente.');
@@ -150,36 +272,51 @@ export const useAuditoria = () => {
     if (isLastQuestionInTopic && isLastTopic) {
       handleSubmitAudit();
     } else if (activeQuestionIndex < totalQuestionsInTopic - 1) {
-      setActiveQuestionIndex(prev => prev + 1);
+      setActiveQuestionIndex((prev) => prev + 1);
     } else if (activeTopicIndex < topicos.length - 1) {
-      setActiveTopicIndex(prev => prev + 1);
+      setActiveTopicIndex((prev) => prev + 1);
       setActiveQuestionIndex(0);
     }
   };
 
   const handleBack = () => {
     if (activeQuestionIndex > 0) {
-      setActiveQuestionIndex(prev => prev - 1);
+      setActiveQuestionIndex((prev) => prev - 1);
     } else if (activeTopicIndex > 0) {
-      setActiveTopicIndex(prev => prev - 1);
+      setActiveTopicIndex((prev) => prev - 1);
       const prevTopic = topicos[activeTopicIndex - 1];
       setActiveQuestionIndex(prevTopic.perguntas.length - 1);
     }
   };
 
-  const currentTopic = useMemo(() => topicos[activeTopicIndex], [topicos, activeTopicIndex]);
-  const currentQuestion = useMemo(() => currentTopic?.perguntas[activeQuestionIndex], [currentTopic, activeQuestionIndex]);
+  const currentTopic = useMemo(
+    () => topicos[activeTopicIndex],
+    [topicos, activeTopicIndex]
+  );
+  const currentQuestion = useMemo(
+    () => currentTopic?.perguntas[activeQuestionIndex],
+    [currentTopic, activeQuestionIndex]
+  );
 
   const progressoGeral = useMemo(() => {
-    const totalPerguntasGeral = topicos.reduce((total, topico) => total + (topico.perguntas?.length || 0), 0);
+    const totalPerguntasGeral = topicos.reduce(
+      (total, topico) => total + (topico.perguntas?.length || 0),
+      0
+    );
     const totalPerguntasRespondidas = Object.keys(respostas).length;
-    return totalPerguntasGeral > 0 ? Math.round((totalPerguntasRespondidas / totalPerguntasGeral) * 100) : 0;
+    return totalPerguntasGeral > 0
+      ? Math.round((totalPerguntasRespondidas / totalPerguntasGeral) * 100)
+      : 0;
   }, [topicos, respostas]);
 
   const progressoDoTopico = useMemo(() => {
     const perguntasDoTopico = currentTopic?.perguntas || [];
-    const perguntasRespondidasDoTopico = perguntasDoTopico.filter(pergunta => respostas[pergunta.id]).length;
-    return perguntasDoTopico.length > 0 ? Math.round((perguntasRespondidasDoTopico / perguntasDoTopico.length) * 100) : 0;
+    const perguntasRespondidasDoTopico = perguntasDoTopico.filter(
+      (pergunta) => respostas[pergunta.id]
+    ).length;
+    return perguntasDoTopico.length > 0
+      ? Math.round((perguntasRespondidasDoTopico / perguntasDoTopico.length) * 100)
+      : 0;
   }, [currentTopic, respostas]);
 
   const resultadoParcialTopico = useMemo(() => {
@@ -187,15 +324,19 @@ export const useAuditoria = () => {
       return null;
     }
     const perguntasDoTopico = currentTopic.perguntas || [];
-    const respostasDoTopico = perguntasDoTopico.filter(p => respostas[p.id]);
+    const respostasDoTopico = perguntasDoTopico.filter((p) => respostas[p.id]);
 
     if (respostasDoTopico.length === 0) {
       return null;
     }
 
-    const conformes = respostasDoTopico.filter(p => respostas[p.id] === 'CF').length;
-    const conformidadeParcial = respostasDoTopico.filter(p => respostas[p.id] === 'PC').length;
-    const totalPontos = conformes + (conformidadeParcial * 0.5);
+    const conformes = respostasDoTopico.filter(
+      (p) => respostas[p.id] === 'CF'
+    ).length;
+    const conformidadeParcial = respostasDoTopico.filter(
+      (p) => respostas[p.id] === 'PC'
+    ).length;
+    const totalPontos = conformes + conformidadeParcial * 0.5;
 
     const percentual = Math.round((totalPontos / respostasDoTopico.length) * 100);
 
@@ -216,8 +357,14 @@ export const useAuditoria = () => {
     return { percentual, classificacao, cor };
   }, [currentTopic, respostas]);
 
-  const isLastQuestion = useMemo(() => activeQuestionIndex === (currentTopic?.perguntas.length - 1), [activeQuestionIndex, currentTopic]);
-  const isLastTopic = useMemo(() => activeTopicIndex === topicos.length - 1, [activeTopicIndex, topicos]);
+  const isLastQuestion = useMemo(
+    () => activeQuestionIndex === currentTopic?.perguntas.length - 1,
+    [activeQuestionIndex, currentTopic]
+  );
+  const isLastTopic = useMemo(
+    () => activeTopicIndex === topicos.length - 1,
+    [activeTopicIndex, topicos]
+  );
 
   const buttonText = isLastQuestion && isLastTopic ? 'Enviar' : 'Avançar';
   const isButtonDisabled = !respostas[currentQuestion?.id] || isSaving;
@@ -239,8 +386,14 @@ export const useAuditoria = () => {
     isButtonDisabled,
     empresaInfo,
     auditoriaInfo,
-    handleRespostaChange,
+    fotos,
+    observacoes,
+    fileInputRef,
     handleNext,
     handleBack,
+    handleRespostaChange,
+    handleFotoChange,
+    handleObservacaoChange,
+    handleRemoveFoto,
   };
 };

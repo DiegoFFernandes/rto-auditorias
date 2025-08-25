@@ -3,7 +3,6 @@ const TopicoService = require('../services/topicos.service');
 const cadastrar = async (req, res) => {
   const { id } = req.params;
 
-  // Validação: 'id' da URL é o ID do usuário, e ele é obrigatório.
   if (!id) {
     return res.status(400).json({ mensagem: 'ID do usuário é obrigatório.' });
   }
@@ -54,8 +53,7 @@ const editar = async (req, res) => {
 
 const apagar = async (req, res) => {
   const { id } = req.params;
-  console.log(`Apagando tópico com ID: ${id}`);
-  
+    
   try {
     return res.status(501).json({ mensagem: 'Método apagar tópico ainda não implementado.' });
   } catch (error) {

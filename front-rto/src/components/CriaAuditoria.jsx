@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import api from '../api/api';
 import { toast } from 'react-toastify';
+import PageCabecalho from './Botoes/PageCabecalho';
+
 import '../styles/CriaAuditoria/index.css';
 
 const CriaAuditoria = () => {
@@ -47,23 +49,32 @@ const CriaAuditoria = () => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!empresaSelecionada) {
-      toast.error('Por favor, selecione uma empresa.');
-      return;
-    }
-    const payload = {
-      cliente: empresaSelecionada,
-      auditoria: dadosAuditoria,
-      timestamp: new Date().toISOString(),
-    };
-    try {
-      localStorage.setItem('empresaSelecionanda', JSON.stringify(payload));
-      navigate('/auditorias');
-    } catch {
-      toast.error('Ocorreu um erro ao processar a auditoria')
-    }
+  e.preventDefault();
+  if (!empresaSelecionada) {
+    toast.error('Por favor, selecione uma empresa.');
+    return;
+  }
+  
+  const payload = {
+    cliente: empresaSelecionada,
+    auditoria: {
+      tipoAuditoria: dadosAuditoria.tipoAuditoria,
+      auditorResponsavel: dadosAuditoria.auditorResponsavel,
+      dataInicio: dadosAuditoria.dataInicio,
+      observacao_geral: dadosAuditoria.observacoes,
+    },
+    timestamp: new Date().toISOString(),
   };
+
+  try {
+    localStorage.setItem('empresa-selecionada', JSON.stringify(payload));
+    navigate('/auditorias');
+    toast.success('Auditoria iniciada com sucesso!');
+  } catch (err) {
+    console.error('Erro ao salvar no localStorage:', err);
+    toast.error('Ocorreu um erro ao processar a auditoria');
+  }
+};
 
   const handleRedirectToCadastro = () => {
     navigate('/cadastro-clientes');
@@ -87,15 +98,12 @@ const CriaAuditoria = () => {
   }
 
   return (
-    <div className="cadastra-cliente-container">
-      <header className="cliente-header">
-        <Link to="/" className="voltar">
-          <FaArrowLeft /> Voltar
-        </Link>
-        <h1>Criar Auditoria</h1>
-        <div className="placeholder"></div>
-      </header>
-
+    <div className="cria-auditoria-container">
+      <PageCabecalho
+        title="Criar Auditoria"
+        backTo="/"
+      />
+      
       <form onSubmit={handleSubmit}>
         <section className="selecao-empresa">
           <h2>Selecione a Empresa</h2>

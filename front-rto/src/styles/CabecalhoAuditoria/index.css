@@ -10,7 +10,7 @@
 }
 
 .cliente-nome {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: bold;
   margin-top: 0;
   margin-bottom: 5px;
@@ -41,23 +41,41 @@
   margin-right: 5px;
 }
 
-@media (max-width: 800px) { 
+.auditorias-grid {
+  display: flex;
+  flex-wrap: wrap; /* Permite que os itens quebrem a linha */
+  gap: 20px; /* Adiciona um espaçamento entre os containers */
+}
+
+@media (max-width: 600px) {
+  /*
+    Este media query garante que os containers tenham o mesmo tamanho
+    e se ajustem para ocupar a largura total em telas menores.
+  */
+
+  .auditorias-grid {
+    flex-direction: column; /* Empilha os containers verticalmente */
+  }
+  
+  .auditoria-card,
+  .loading-card,
+  .success-card,
   .auditoria-header-info {
+    width: 100%; /* Garante que todos os containers tenham a mesma largura (100%) */
+    box-sizing: border-box; /* Inclui padding e borda no cálculo da largura total */
     padding: 15px; 
-    margin: 10px;
+    margin: 10px auto; /* Centraliza o container */
     max-width: 600px;
+  }
+  
+  .auditoria-header-info p,
+  .cliente-nome,
+  .cliente-cnpj {
+    font-size: 0.9rem; /* Unifica o tamanho da fonte */
   }
 
   .cliente-nome {
-    font-size: 1.25rem;
-  }
-
-  .cliente-cnpj {
-    font-size: 0.9rem;
-  }
-
-  .auditoria-header-info p {
-    font-size: 0.9rem;
+    font-size: 1rem;
     margin: 5px 0;
   }
 }
