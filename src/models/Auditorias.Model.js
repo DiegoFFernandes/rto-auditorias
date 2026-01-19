@@ -106,6 +106,8 @@ const listarDashboard = async (clienteId, ano) => {
     LEFT JOIN respostas AS r ON a.id = r.id_auditoria AND ps.id_pergunta_original = r.id_pergunta
     WHERE
       c.id = ? AND YEAR(a.dt_auditoria) = ? AND a.st_auditoria = 'F'
+       AND r.st_pergunta IS NOT NULL
+       AND ts.ordem_topico IS NOT NULL
     ORDER BY
       a.dt_auditoria, ts.ordem_topico, ps.ordem_pergunta;
   `;
