@@ -69,7 +69,7 @@ const ListaAuditorias = () => {
                 return;
             }
 
-            generatePdf(topicos, respostas, clienteInfo, auditoriaInfo, fotos, observacoes);
+            await generatePdf(topicos, respostas, clienteInfo, auditoriaInfo, fotos, observacoes);
             toast.success("PDF gerado com sucesso!");
         } catch (error) {
             console.error("Erro ao gerar o PDF:", error);

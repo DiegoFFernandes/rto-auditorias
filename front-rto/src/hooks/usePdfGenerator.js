@@ -1,19 +1,20 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const PDF_IMAGE_MAX_DIMENSION = 1280;
+const PDF_IMAGE_QUALITY = 0.62;
+
 const sanitizePdfText = (value) => {
   if (typeof value !== 'string') return value || '';
   return value
-    .replace(/\u2070/g, '°') // superscript zero
-    .replace(/\u00B0/g, '°') // degree symbol
-    .replace(/\u02DA/g, '°'); // ring above
+    .replace(/\u2070/g, '°')
+    .replace(/\u00B0/g, '°')
+    .replace(/\u02DA/g, '°');
 };
 
 const softWrapPdfText = (value) => {
   if (typeof value !== 'string' || !value) return value || '';
-  // Ajuda o AutoTable a quebrar tokens longos (ex.: URLs) sem alterar muito o texto.
-  const withHints = value.replace(/[\/_-]/g, (m) => `${m} `);
-  // Se ainda houver um "palavrão" sem espaços, insere espaços periódicos.
+  const withHints = value.replace(/[/_-]/g, (m) => `${m} `);
   return withHints.replace(/\S{35,}/g, (token) => token.replace(/(.{25})/g, '$1 '));
 };
 
@@ -34,8 +35,96 @@ export const usePdfGenerator = () => {
     return `${normalizedBase}${normalizedPath}`;
   };
 
-  const generatePdf = (topicos, respostas, empresaInfo, auditoriaInfo, fotos, comentario) => {
-    const doc = new jsPDF();
+  const loadImageDimensions = (src) => new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ img, width: img.naturalWidth || img.width, height: img.naturalHeight || img.height });
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+
+  const loadBitmapWithOrientation = async (blob) => {
+    if (typeof createImageBitmap !== 'function') {
+      return null;
+    }
+
+    try {
+      return await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    } catch {
+      return null;
+    }
+  };
+
+  const toPdfImageData = async (url) => {
+    if (!url) return null;
+    try {
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error('Falha ao baixar imagem');
+      const blob = await response.blob();
+
+      const orientedBitmap = await loadBitmapWithOrientation(blob);
+      if (orientedBitmap) {
+        const width = orientedBitmap.width;
+        const height = orientedBitmap.height;
+        const scale = Math.min(PDF_IMAGE_MAX_DIMENSION / width, PDF_IMAGE_MAX_DIMENSION / height, 1);
+        const targetWidth = Math.max(1, Math.round(width * scale));
+        const targetHeight = Math.max(1, Math.round(height * scale));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        const context = canvas.getContext('2d', { alpha: false });
+        if (!context) {
+          orientedBitmap.close();
+          return null;
+        }
+
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, targetWidth, targetHeight);
+        context.drawImage(orientedBitmap, 0, 0, targetWidth, targetHeight);
+        orientedBitmap.close();
+
+        const dataUrl = canvas.toDataURL('image/jpeg', PDF_IMAGE_QUALITY);
+        return { dataUrl, width: targetWidth, height: targetHeight, format: 'JPEG' };
+      }
+
+      const objectUrl = URL.createObjectURL(blob);
+
+      try {
+        const imageInfo = await loadImageDimensions(objectUrl);
+        if (!imageInfo) return null;
+
+        const { img, width, height } = imageInfo;
+        const scale = Math.min(PDF_IMAGE_MAX_DIMENSION / width, PDF_IMAGE_MAX_DIMENSION / height, 1);
+        const targetWidth = Math.max(1, Math.round(width * scale));
+        const targetHeight = Math.max(1, Math.round(height * scale));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        const context = canvas.getContext('2d', { alpha: false });
+        if (!context) {
+          return null;
+        }
+
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, targetWidth, targetHeight);
+        context.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', PDF_IMAGE_QUALITY);
+        return { dataUrl, width: targetWidth, height: targetHeight, format: 'JPEG' };
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    } catch (error) {
+      console.error('Erro ao preparar imagem para PDF:', error);
+      return null;
+    }
+  };
+
+  const generatePdf = async (topicos, respostas, empresaInfo, auditoriaInfo, fotos, comentario) => {
+    const doc = new jsPDF({ compress: true });
     let yOffset = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -143,7 +232,8 @@ export const usePdfGenerator = () => {
     doc.text(`Resultado Geral: ${resultadoGeral}%`, pageWidth / 2, yOffset + 7, { align: "center" });
     yOffset += 20;
 
-    topicosOrdenados.forEach((topico, tIndex) => {
+    for (let tIndex = 0; tIndex < topicosOrdenados.length; tIndex++) {
+      const topico = topicosOrdenados[tIndex];
       if (tIndex > 0) {
         doc.addPage();
         yOffset = margin;
@@ -199,7 +289,6 @@ export const usePdfGenerator = () => {
       }
 
       const tableWidth = pageWidth - margin * 2;
-      // Deixa folga pra evitar "could not fit page".
       const safeTableWidth = Math.max(tableWidth - 2, 80);
       const numeroColumnWidth = 10;
       const respostaColumnWidth = 45;
@@ -254,10 +343,11 @@ export const usePdfGenerator = () => {
       });
 
       if (fotosDoTopico.length > 0) {
-        const imgWidth = (pageWidth - (margin * 3)) / 2;
-        const imgHeight = (imgWidth * 3) / 4;
+        const boxWidth = (pageWidth - (margin * 3)) / 2;
+        const boxHeight = Math.min(90, (pageHeight - margin * 2) / 3);
+        let rowMaxHeight = 0;
 
-        if (yOffset + imgHeight + 20 > pageHeight - margin) {
+        if (yOffset + boxHeight + 20 > pageHeight - margin) {
           doc.addPage();
           yOffset = margin;
         }
@@ -268,34 +358,51 @@ export const usePdfGenerator = () => {
 
         for (let i = 0; i < fotosDoTopico.length; i++) {
           const foto = fotosDoTopico[i];
-          const xPos = margin + (i % 2 === 1 ? imgWidth + margin : 0);
+          const xPos = margin + (i % 2 === 1 ? boxWidth + margin : 0);
           const fotoUrl = resolveFotoUrl(foto.url);
 
           if (i % 2 === 0) {
-            if (yOffset + imgHeight + 10 > pageHeight - margin) {
+            if (yOffset + boxHeight + 12 > pageHeight - margin) {
               doc.addPage();
               yOffset = margin;
             }
-            doc.setFontSize(8);
-            doc.text(`Pergunta ${foto.ordem}`, xPos, yOffset);
-            if (fotoUrl) {
-              doc.addImage(fotoUrl, 'JPEG', xPos, yOffset + 3, imgWidth, imgHeight);
+            rowMaxHeight = 0;
+          }
+
+          doc.setFontSize(8);
+          doc.text(`Pergunta ${foto.ordem}`, xPos, yOffset);
+
+          if (fotoUrl) {
+            const imageData = await toPdfImageData(fotoUrl);
+            if (imageData) {
+              const { dataUrl, width, height, format } = imageData;
+              const scale = Math.min(boxWidth / width, boxHeight / height, 1);
+              const finalW = width * scale;
+              const finalH = height * scale;
+              const imgX = xPos + (boxWidth - finalW) / 2;
+              const imgY = yOffset + 3;
+
+              doc.addImage(dataUrl, format, imgX, imgY, finalW, finalH, undefined, 'MEDIUM');
+              rowMaxHeight = Math.max(rowMaxHeight, finalH);
+            } else {
+              doc.text('Falha ao carregar imagem', xPos, yOffset + 10);
+              rowMaxHeight = Math.max(rowMaxHeight, boxHeight * 0.5);
             }
           } else {
-            doc.setFontSize(8);
-            doc.text(`Pergunta ${foto.ordem}`, xPos, yOffset);
-            if (fotoUrl) {
-              doc.addImage(fotoUrl, 'JPEG', xPos, yOffset + 3, imgWidth, imgHeight);
-            }
-            yOffset += imgHeight + 8;
+            doc.text('URL inválida', xPos, yOffset + 10);
+            rowMaxHeight = Math.max(rowMaxHeight, boxHeight * 0.5);
+          }
+
+          if (i % 2 === 1) {
+            yOffset += rowMaxHeight + 10;
           }
         }
 
         if (fotosDoTopico.length % 2 !== 0) {
-          yOffset += imgHeight + 8;
+          yOffset += rowMaxHeight + 10;
         }
       }
-    });
+    }
 
     const finalY = pageHeight - 20;
     doc.setFontSize(8);

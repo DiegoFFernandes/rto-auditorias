@@ -15,6 +15,7 @@ const storage = new CloudinaryStorage({
       folder: defaultFolder,
       public_id: `${baseName}-${uniqueSuffix}`,
       resource_type: "auto",
+      transformation: [{ angle: "exif", quality: "auto:good", fetch_format: "auto" }],
       overwrite: false,
     };
   },
