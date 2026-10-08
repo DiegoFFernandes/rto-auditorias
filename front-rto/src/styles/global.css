@@ -18,3 +18,24 @@ a {
 ul {
   list-style: none;
 }
+
+/* Aviso de nova versão do app (toast) */
+.aviso-versao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.aviso-versao button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 999px;
+  background-color: #660c39;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
