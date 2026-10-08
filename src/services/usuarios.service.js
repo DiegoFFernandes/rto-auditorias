@@ -1,8 +1,9 @@
 const UsuarioModel = require('../models/Usuarios.Model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET, JWT_EXPIRES_IN } = require('../config/jwt');
 
-const saltRounds = 8;
+const saltRounds = 12;
 
 const listarTodosUsuarios = async () => {
   return UsuarioModel.listarUsuarios();
@@ -65,7 +66,20 @@ const alterarSenha = async (id, novaSenha) => {
   return { mensagem: 'Senha alterada com sucesso.' };
 };
 
-const excluirUsuario = async (id) => {
+const excluirUsuario = async (id, usuarioLogado) => {
+  if (usuarioLogado && String(usuarioLogado.id) === String(id)) {
+    const error = new Error('Você não pode excluir o seu próprio usuário.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const vinculos = await UsuarioModel.contarVinculos(id);
+  if (vinculos.auditorias > 0 || vinculos.topicos > 0) {
+    const error = new Error('Este usuário possui auditorias ou tópicos vinculados e não pode ser excluído.');
+    error.statusCode = 409;
+    throw error;
+  }
+
   const affectedRows = await UsuarioModel.excluirUsuario(id);
   if (affectedRows === 0) {
     throw new Error('Usuário não encontrado ou não foi possível excluir.');
@@ -84,10 +98,20 @@ const autenticarUsuario = async (email, senha) => {
     if (!senhaCorreta) {
       return error;
     }
+    // Hashes antigos (custo menor) são atualizados de forma transparente no login.
+    if (bcrypt.getRounds(usuario.senha) < saltRounds) {
+      try {
+        const novoHash = await bcrypt.hash(senha, saltRounds);
+        await UsuarioModel.alterarSenha(usuario.id, novoHash);
+      } catch (rehashError) {
+        console.error('Não foi possível atualizar o hash da senha:', rehashError);
+      }
+    }
+
     const token = jwt.sign(
       { id: usuario.id, email: usuario.email, role: usuario.tipo_usuario },
-      process.env.JWT_SECRET || 'your_secret_key_here',
-      { expiresIn: '1d' }
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
     );
     return {
       id: usuario.id,

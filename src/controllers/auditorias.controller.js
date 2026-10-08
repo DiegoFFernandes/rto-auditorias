@@ -1,4 +1,5 @@
 const AuditoriasService = require('../services/auditorias.service');
+const { responderErro } = require('../utils/respostaErro');
 
 const iniciar = async (req, res) => {
   try {
@@ -16,37 +17,29 @@ const iniciar = async (req, res) => {
     return res.status(201).json({ mensagem: 'Auditoria iniciada com sucesso!', auditoria: resultado });
   } catch (error) {
     console.error("Erro no controller ao iniciar auditoria:", error);
-    const statusCode = error.statusCode || 400;
-    const payload = { mensagem: error.message };
-    if (error.code) {
-      payload.codigo = error.code;
-    }
-    if (error.conflito) {
-      payload.conflito = error.conflito;
-    }
-    return res.status(statusCode).json(payload);
+    return responderErro(res, error);
   }
 };
 
 const salvarProgresso = async (req, res) => {
   const { id } = req.params;
   try {
-    const resultado = await AuditoriasService.salvarProgressoAuditoria(id, req.body);
+    const resultado = await AuditoriasService.salvarProgressoAuditoria(id, req.body, req.usuario);
     return res.status(200).json(resultado);
   } catch (error) {
     console.error("Erro no controller ao salvar progresso:", error);
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
 const finalizar = async (req, res) => {
   const { id } = req.params;
   try {
-    const resultado = await AuditoriasService.finalizarAuditoria(id);
+    const resultado = await AuditoriasService.finalizarAuditoria(id, req.usuario);
     return res.status(200).json(resultado);
   } catch (error) {
     console.error("Erro no controller ao finalizar auditoria:", error);
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
@@ -57,7 +50,7 @@ const cancelar = async (req, res) => {
     return res.status(200).json(resultado);
   } catch (error) {
     console.error("Erro no controller ao cancelar auditoria:", error);
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
@@ -67,7 +60,7 @@ const listar = async (_req, res) => {
     const auditorias = await AuditoriasService.listaAuditorias();
     return res.status(200).json({ auditorias });
   } catch (error) {
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 

@@ -3,12 +3,13 @@ const router = express.Router();
 const AuditoriaController = require('../../controllers/auditorias.controller');
 const AgendamentoController = require('../../controllers/agendamentos.controller');
 const authMiddleware = require('../../middlewares/auth');
+const { exigeAdmin } = require('../../middlewares/autorizacao');
 
 
 router.post('/iniciar', authMiddleware, AuditoriaController.iniciar);
 router.patch('/progresso/:id', authMiddleware, AuditoriaController.salvarProgresso);
 router.put('/finalizar/:id', authMiddleware, AuditoriaController.finalizar);
-router.put('/cancelar/:id', authMiddleware, AuditoriaController.cancelar);
+router.put('/cancelar/:id', authMiddleware, exigeAdmin, AuditoriaController.cancelar);
 
 router.post('/agendar', authMiddleware, AgendamentoController.agendar);
 router.get('/agendamentos', authMiddleware, AgendamentoController.listar);

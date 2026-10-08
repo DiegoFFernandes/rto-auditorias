@@ -1,11 +1,12 @@
 const AgendamentoService = require('../services/agendamentos.service');
+const { responderErro } = require('../utils/respostaErro');
 
 const agendar = async (req, res) => {
   try {
     const novoAgendamento = await AgendamentoService.agendarAuditoria(req.body);  
     return res.status(201).json({ mensagem: 'Agendamento criado com sucesso!', novoAgendamento });
   } catch (error) {
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
@@ -14,7 +15,7 @@ const listar = async (req, res) => {
     const agendamentos = await AgendamentoService.listarAgendamentosFuturos();
     return res.status(200).json(agendamentos);
   } catch (error) {
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
@@ -24,7 +25,7 @@ const excluir = async (req, res) => {
     const resultado = await AgendamentoService.excluirAgendamento(id);
     return res.status(200).json(resultado);
   } catch (error) {
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 

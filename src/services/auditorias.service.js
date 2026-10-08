@@ -2,7 +2,14 @@ const AuditoriasModel = require('../models/Auditorias.Model');
 const ArquivosModel = require('../models/Arquivos.Model');
 const TopicosSnapshotModel = require('../models/TopicosSnapshot.Model');
 const PerguntasSnapshotModel = require('../models/PerguntasSnapshot.Model');
+const { caminhoDeFotoValido } = require('./arquivos.service');
 const connection = require('../database/connection');
+
+const erroHttp = (mensagem, statusCode) => {
+  const error = new Error(mensagem);
+  error.statusCode = statusCode;
+  return error;
+};
 
 const iniciarAuditoria = async (dados, usuario) => {
   const { cliente, auditoria } = dados;
@@ -12,45 +19,80 @@ const iniciarAuditoria = async (dados, usuario) => {
   }
 
   const forceCancelPrevious = Boolean(dados?.forceCancelPrevious || auditoria?.forceCancelPrevious);
-  const auditoriaExistenteMesmoMes = await AuditoriasModel.buscarAuditoriaMesmoMes(
-    cliente.id,
-    auditoria.dataInicio
-  );
 
-  if (auditoriaExistenteMesmoMes) {
-    if (forceCancelPrevious) {
-      await AuditoriasModel.cancelarAuditoria(auditoriaExistenteMesmoMes.id);
-    } else {
-      return {
-        requiresConfirmation: true,
-        mensagem: 'Já existe uma validação dentro do mês de competência. Você deseja cancelar a anterior e seguir com uma nova?',
-        codigo: 'AUDITORIA_MES_CONFLITO',
-        conflito: auditoriaExistenteMesmoMes,
-      };
-    }
-  }
-
-  const auditoriaData = {
-    id_usuario: usuario.id,
-    id_cliente: cliente.id,
-    observacao_geral: auditoria.observacao_geral || '',
-    dt_auditoria: auditoria.dataInicio,
-    st_auditoria: 'A',
-  };
-
-  const novaAuditoriaId = await AuditoriasModel.cadastrarAuditoria(auditoriaData);
-
+  // Cancelamento da anterior, criação da auditoria e snapshots acontecem na mesma transação:
+  // se qualquer etapa falhar, nada é gravado (sem auditoria órfã nem cancelamento perdido).
+  const conn = await connection.getConnection();
   try {
-    await criarSnapshotsAuditoria(novaAuditoriaId);
-  } catch (error) {
-    console.error('Erro ao criar snapshots da auditoria:', error);
-    throw new Error(`Falha ao inicializar auditoria com snapshots: ${error.message}`);
-  }
+    await conn.beginTransaction();
 
-  return { id: novaAuditoriaId, ...auditoriaData };
+    // Trava a linha do cliente para que duas requisições simultâneas não criem
+    // duas auditorias no mesmo mês de competência.
+    await conn.query('SELECT id FROM clientes WHERE id = ? FOR UPDATE', [cliente.id]);
+
+    const auditoriaExistenteMesmoMes = await AuditoriasModel.buscarAuditoriaMesmoMes(
+      cliente.id,
+      auditoria.dataInicio,
+      conn
+    );
+
+    if (auditoriaExistenteMesmoMes) {
+      if (!forceCancelPrevious) {
+        await conn.rollback();
+        return {
+          requiresConfirmation: true,
+          mensagem: 'Já existe uma validação dentro do mês de competência. Você deseja cancelar a anterior e seguir com uma nova?',
+          codigo: 'AUDITORIA_MES_CONFLITO',
+          conflito: auditoriaExistenteMesmoMes,
+        };
+      }
+      await AuditoriasModel.cancelarAuditoria(auditoriaExistenteMesmoMes.id, conn);
+    }
+
+    const auditoriaData = {
+      id_usuario: usuario.id,
+      id_cliente: cliente.id,
+      observacao_geral: auditoria.observacao_geral || '',
+      dt_auditoria: auditoria.dataInicio,
+      st_auditoria: 'A',
+    };
+
+    const novaAuditoriaId = await AuditoriasModel.cadastrarAuditoria(auditoriaData, conn);
+
+    try {
+      await criarSnapshotsAuditoria(novaAuditoriaId, conn);
+    } catch (error) {
+      console.error('Erro ao criar snapshots da auditoria:', error);
+      throw new Error(`Falha ao inicializar auditoria com snapshots: ${error.message}`);
+    }
+
+    await conn.commit();
+    return { id: novaAuditoriaId, ...auditoriaData };
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
+  }
 };
 
-const salvarProgressoAuditoria = async (id_auditoria, dadosResposta) => {
+// Garante que a auditoria existe, está em andamento e pertence ao usuário (ou ele é ADM).
+const obterAuditoriaEditavel = async (id_auditoria, usuario, conn) => {
+  const auditoria = await AuditoriasModel.buscarAuditoriaPorId(id_auditoria, conn, true);
+
+  if (!auditoria) {
+    throw erroHttp('Auditoria não encontrada.', 404);
+  }
+  if (auditoria.st_auditoria !== 'A') {
+    throw erroHttp('Esta auditoria já foi finalizada ou cancelada e não pode mais ser alterada.', 409);
+  }
+  if (usuario?.role !== 'ADM' && String(auditoria.id_usuario) !== String(usuario?.id)) {
+    throw erroHttp('Você não tem permissão para alterar esta auditoria.', 403);
+  }
+  return auditoria;
+};
+
+const salvarProgressoAuditoria = async (id_auditoria, dadosResposta, usuario) => {
 
   const { id_pergunta, st_pergunta, comentario, fotos } = dadosResposta;
 
@@ -60,47 +102,73 @@ const salvarProgressoAuditoria = async (id_auditoria, dadosResposta) => {
     throw new Error('Dados de resposta incompletos ou inválidos para salvar o progresso.');
   }
 
-  const [perguntaExistente] = await connection.query(
-    'SELECT id FROM perguntas WHERE id = ?',
-    [id_pergunta]
-  );
+  const fotosValidas = Array.isArray(fotos)
+    ? fotos.filter(url => typeof url === 'string' && url.trim() !== '')
+    : [];
 
-  if (!perguntaExistente || perguntaExistente.length === 0) {
-    console.error(`❌ Pergunta ${id_pergunta} não encontrada!`);
-    throw new Error(`Pergunta com ID ${id_pergunta} não existe. Recarregue a página para atualizar os dados.`);
+  if (!fotosValidas.every(caminhoDeFotoValido)) {
+    throw new Error('Uma ou mais fotos possuem um endereço inválido.');
   }
 
-  const respostaSalvaId = await AuditoriasModel.salvarOuAtualizarResposta({
-    id_auditoria: parseInt(id_auditoria),
-    id_pergunta: parseInt(id_pergunta),
-    st_pergunta,
-    comentario: comentario || ''
-  });
+  // Resposta e fotos são gravadas juntas: uma falha no meio não deixa a resposta sem as fotos.
+  const conn = await connection.getConnection();
+  try {
+    await conn.beginTransaction();
 
-  if (respostaSalvaId <= 0) {
-    throw new Error('Não foi possível salvar ou atualizar a resposta.');
+    await obterAuditoriaEditavel(id_auditoria, usuario, conn);
+
+    const perguntaDaAuditoria = await AuditoriasModel.perguntaPertenceAAuditoria(id_auditoria, id_pergunta, conn);
+    if (!perguntaDaAuditoria) {
+      throw new Error('Esta pergunta não faz parte da auditoria. Recarregue a página para atualizar os dados.');
+    }
+
+    const respostaSalvaId = await AuditoriasModel.salvarOuAtualizarResposta({
+      id_auditoria: parseInt(id_auditoria),
+      id_pergunta: parseInt(id_pergunta),
+      st_pergunta,
+      comentario: comentario || ''
+    }, conn);
+
+    if (respostaSalvaId <= 0) {
+      throw new Error('Não foi possível salvar ou atualizar a resposta.');
+    }
+
+    await ArquivosModel.deletarArquivosPorResposta(respostaSalvaId, conn);
+
+    for (const url of fotosValidas) {
+      await ArquivosModel.inserirArquivos({ id_resposta: respostaSalvaId, tipo: 'Foto', caminho: url }, conn);
+    }
+
+    await conn.commit();
+    return { id_resposta: respostaSalvaId, mensagem: 'Progresso salvo com sucesso.' };
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
   }
-
-  await ArquivosModel.deletarArquivosPorResposta(respostaSalvaId);
-
-  if (fotos && Array.isArray(fotos) && fotos.length > 0) {
-    const fotosValidas = fotos.filter(url => typeof url === 'string' && url.trim() !== '');
-    const promessasFotos = fotosValidas.map(url =>
-      ArquivosModel.inserirArquivos({ id_resposta: respostaSalvaId, tipo: 'Foto', caminho: url })
-    );
-    await Promise.all(promessasFotos);
-  }
-
-  return { id_resposta: respostaSalvaId, mensagem: 'Progresso salvo com sucesso.' };
 };
 
 
-const finalizarAuditoria = async (id) => {
-  const affectedRows = await AuditoriasModel.finalizarAuditoria(id);
-  if (affectedRows === 0) {
-    throw new Error('Auditoria não encontrada para finalizar.');
+const finalizarAuditoria = async (id, usuario) => {
+  const conn = await connection.getConnection();
+  try {
+    await conn.beginTransaction();
+    await obterAuditoriaEditavel(id, usuario, conn);
+
+    const affectedRows = await AuditoriasModel.finalizarAuditoria(id, conn);
+    if (affectedRows === 0) {
+      throw erroHttp('Auditoria não encontrada ou já finalizada.', 409);
+    }
+
+    await conn.commit();
+    return { mensagem: 'Auditoria finalizada com sucesso!' };
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
   }
-  return { mensagem: 'Auditoria finalizada com sucesso!' };
 };
 
 const cancelarAuditoria = async (id) => {
@@ -182,7 +250,7 @@ const listaAuditoriaPorID = async (id_auditoria) => {
     if (row.st_pergunta !== null && row.st_pergunta !== undefined) {
       resultado.respostas[row.id_pergunta] = row.st_pergunta;
       resultado.observacoes[row.id_pergunta] = row.comentario || '';
-      resultado.fotos[row.id_pergunta] = row.caminhos_fotos ? row.caminhos_fotos.split(',') : [];
+      resultado.fotos[row.id_pergunta] = row.fotos || [];
     }
   });
 
@@ -208,6 +276,7 @@ const listarDashboard = async (clienteId, ano) => {
       auditoriasAgrupadas.set(auditoriaId, {
         id: auditoriaId,
         dt_auditoria: row.dt_auditoria,
+        mesIndex: Number(row.mes_index),
         topicos: new Map()
       });
     }
@@ -235,7 +304,7 @@ const listarDashboard = async (clienteId, ano) => {
   const resultadosMensaisTabela = new Map();
 
   auditoriasConsolidadas.forEach(auditoria => {
-    const mesIndex = new Date(auditoria.dt_auditoria).getMonth();
+    const mesIndex = auditoria.mesIndex;
 
     if (!resultadosMensaisTabela.has(mesIndex)) {
       resultadosMensaisTabela.set(mesIndex, { soma: 0, count: 0 });
@@ -364,29 +433,17 @@ const dataAuditoriaPorCliente = async (clienteId) => {
   return anos;
 };
 
-const criarSnapshotsAuditoria = async (id_auditoria) => {
-  try {
-    console.log(`Criando snapshots para auditoria ID: ${id_auditoria}`);
+// Deve receber a conexão da transação aberta por quem a chama (iniciarAuditoria).
+const criarSnapshotsAuditoria = async (id_auditoria, conn) => {
+  const topicosCopiados = await TopicosSnapshotModel.criarSnapshotTopicos(id_auditoria, conn);
+  const perguntasCopiadas = await PerguntasSnapshotModel.criarSnapshotPerguntas(id_auditoria, conn);
 
-    const topicosSnapshotIds = await TopicosSnapshotModel.criarSnapshotTopicos(id_auditoria);
-    console.log(`✓ ${topicosSnapshotIds.length} tópicos copiados para snapshot`);
-
-    const perguntasSnapshotIds = await PerguntasSnapshotModel.criarSnapshotPerguntas(
-      id_auditoria,
-      topicosSnapshotIds
-    );
-    console.log(`✓ ${perguntasSnapshotIds.length} perguntas copiadas para snapshot`);
-
-    return {
-      id_auditoria,
-      topicos_snapshot: topicosSnapshotIds.length,
-      perguntas_snapshot: perguntasSnapshotIds.length,
-      mensagem: 'Snapshots criados com sucesso'
-    };
-  } catch (error) {
-    console.error('Erro ao criar snapshots da auditoria:', error);
-    throw error;
-  }
+  return {
+    id_auditoria,
+    topicos_snapshot: topicosCopiados,
+    perguntas_snapshot: perguntasCopiadas,
+    mensagem: 'Snapshots criados com sucesso'
+  };
 };
 
 module.exports = {

@@ -18,28 +18,6 @@ const atualizarStatus = async (req, res) => {
   }
 };
 
-const editarPergunta = async (req, res) => {
-  const { id } = req.params;
-  const { descricao_pergunta, ordem_pergunta } = req.body;
-
-  try {
-    const resultado = await PerguntasService.editarPergunta(id, {
-      descricao_pergunta,
-      ordem_pergunta
-    });
-
-    if (resultado.error) {
-      return res.status(resultado.statusCode).json({ message: resultado.message });
-    }
-
-    return res.status(200).json(resultado);
-  } catch (error) {
-    console.error('Erro no controller ao editar pergunta:', error);
-    return res.status(500).json({ message: 'Erro interno do servidor.' });
-  }
-};
-
 module.exports = {
   atualizarStatus,
-  editarPergunta,
 };

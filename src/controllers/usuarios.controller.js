@@ -1,11 +1,12 @@
 const UsuarioService = require('../services/usuarios.service');
+const { responderErro } = require('../utils/respostaErro');
 
 const listar = async (_req, res) => {
   try {
     const usuarios = await UsuarioService.listarTodosUsuarios();
     return res.status(200).json(usuarios);
   } catch (error) {
-    return res.status(500).json({ mensagem: error.message });
+    return responderErro(res, error, 500);
   }
 };
 
@@ -15,7 +16,7 @@ const buscarPorId = async (req, res) => {
     const usuario = await UsuarioService.buscarUsuarioPorId(id);
     return res.status(200).json(usuario);
   } catch (error) {
-    return res.status(404).json({ mensagem: error.message });
+    return responderErro(res, error, 404);
   }
 };
 
@@ -24,7 +25,7 @@ const cadastrar = async (req, res) => {
     const novoUsuario = await UsuarioService.cadastrarUsuario(req.body);
     return res.status(201).json(novoUsuario);
   } catch (error) {
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
@@ -34,7 +35,7 @@ const editar = async (req, res) => {
     const usuarioEditado = await UsuarioService.editarUsuario(id, req.body);
     return res.status(200).json(usuarioEditado);
   } catch (error) {
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
@@ -45,17 +46,17 @@ const alterarSenha = async (req, res) => {
     const resultado = await UsuarioService.alterarSenha(id, novaSenha);
     return res.status(200).json(resultado);
   } catch (error) {
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
 const excluir = async (req, res) => {
   try {
     const { id } = req.params;
-    const resultado = await UsuarioService.excluirUsuario(id);
+    const resultado = await UsuarioService.excluirUsuario(id, req.usuario);
     return res.status(200).json(resultado);
   } catch (error) {
-    return res.status(400).json({ mensagem: error.message });
+    return responderErro(res, error, 400);
   }
 };
 
@@ -68,7 +69,7 @@ const login = async (req, res) => {
     }
     return res.status(200).json({ usuario });
   } catch (error) {
-    return res.status(500).json({ mensagem: error.message });
+    return responderErro(res, error, 500);
   }
 };
 

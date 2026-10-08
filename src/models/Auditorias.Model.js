@@ -1,9 +1,12 @@
 const connection = require('../database/connection');
 
-const cadastrarAuditoria = async (auditoriaData) => {
+// As funções que alteram dados aceitam uma conexão opcional (`conn`) para participarem
+// de uma transação aberta pelo service. Sem ela, usam o pool normalmente.
+
+const cadastrarAuditoria = async (auditoriaData, conn = connection) => {
   const { id_usuario, id_cliente, observacao_geral, dt_auditoria, st_auditoria } = auditoriaData;
   const query = 'INSERT INTO auditorias (id_usuario, id_cliente, observacao, dt_auditoria, st_auditoria) VALUES (?, ?, ?, ?, ?)';
-  const [result] = await connection.query(query, [id_usuario, id_cliente, observacao_geral, dt_auditoria, st_auditoria]);
+  const [result] = await conn.query(query, [id_usuario, id_cliente, observacao_geral, dt_auditoria, st_auditoria]);
   return result.insertId;
 };
 
@@ -28,7 +31,19 @@ const listaAuditorias = async () => {
   return rows;
 };
 
-const salvarOuAtualizarResposta = async (respostaData) => {
+const buscarAuditoriaPorId = async (id, conn = connection, bloquear = false) => {
+  const query = `SELECT id, id_usuario, id_cliente, st_auditoria FROM auditorias WHERE id = ?${bloquear ? ' FOR UPDATE' : ''}`;
+  const [rows] = await conn.query(query, [id]);
+  return rows[0] || null;
+};
+
+const perguntaPertenceAAuditoria = async (id_auditoria, id_pergunta, conn = connection) => {
+  const query = 'SELECT 1 FROM perguntas_snapshot WHERE id_auditoria = ? AND id_pergunta_original = ? LIMIT 1';
+  const [rows] = await conn.query(query, [id_auditoria, id_pergunta]);
+  return rows.length > 0;
+};
+
+const salvarOuAtualizarResposta = async (respostaData, conn = connection) => {
   const { id_auditoria, id_pergunta, st_pergunta, comentario } = respostaData;
   const query = `
     INSERT INTO respostas (id_auditoria, id_pergunta, st_pergunta, comentario)
@@ -37,13 +52,14 @@ const salvarOuAtualizarResposta = async (respostaData) => {
       st_pergunta = VALUES(st_pergunta),
       comentario = VALUES(comentario);
   `;
-  const [result] = await connection.query(query, [id_auditoria, id_pergunta, st_pergunta, comentario]);
-  const buscarIdResposta = async (id_auditoria, id_pergunta) => {
-    const query = 'SELECT id FROM respostas WHERE id_auditoria = ? AND id_pergunta = ?';
-    const [rows] = await connection.query(query, [id_auditoria, id_pergunta]);
-    return rows[0]?.id || 0;
-  }
-  return result.insertId || (await buscarIdResposta(id_auditoria, id_pergunta));
+  await conn.query(query, [id_auditoria, id_pergunta, st_pergunta, comentario]);
+
+  // O insertId de um ON DUPLICATE KEY UPDATE não é confiável quando a linha já existia.
+  const [rows] = await conn.query(
+    'SELECT id FROM respostas WHERE id_auditoria = ? AND id_pergunta = ?',
+    [id_auditoria, id_pergunta]
+  );
+  return rows[0]?.id || 0;
 };
 
 const listaAuditoriaPorID = async (id) => {
@@ -67,23 +83,37 @@ const listaAuditoriaPorID = async (id) => {
     ps.id_pergunta_original AS id_pergunta,
     ps.descricao_pergunta,
     ps.ordem_pergunta,
-    r.id as id_resposta,
+    r.id AS id_resposta,
     r.st_pergunta,
-    r.comentario,
-    GROUP_CONCAT(arq.caminho SEPARATOR ',') AS caminhos_fotos
+    r.comentario
   FROM auditorias a
   JOIN clientes c ON a.id_cliente = c.id
   JOIN usuarios u ON a.id_usuario = u.id
   JOIN topicos_snapshot ts ON a.id = ts.id_auditoria
   JOIN perguntas_snapshot ps ON ts.id = ps.id_topico_snapshot
   LEFT JOIN respostas r ON a.id = r.id_auditoria AND ps.id_pergunta_original = r.id_pergunta
-  LEFT JOIN arquivos arq ON r.id = arq.id_resposta
   WHERE a.id = ?
-  GROUP BY a.id, ts.id, ps.id_pergunta_original, r.id
   ORDER BY ts.ordem_topico, ps.ordem_pergunta;`;
 
   const [rows] = await connection.query(query, [id]);
-  return rows;
+
+  // As fotos vêm de uma consulta própria: evita o limite do GROUP_CONCAT
+  // e URLs com vírgula quebrando a lista.
+  const idsRespostas = rows.map((row) => row.id_resposta).filter(Boolean);
+  const fotosPorResposta = new Map();
+
+  if (idsRespostas.length > 0) {
+    const [arquivos] = await connection.query(
+      'SELECT id_resposta, caminho FROM arquivos WHERE id_resposta IN (?) ORDER BY id',
+      [idsRespostas]
+    );
+    arquivos.forEach(({ id_resposta, caminho }) => {
+      if (!fotosPorResposta.has(id_resposta)) fotosPorResposta.set(id_resposta, []);
+      fotosPorResposta.get(id_resposta).push(caminho);
+    });
+  }
+
+  return rows.map((row) => ({ ...row, fotos: fotosPorResposta.get(row.id_resposta) || [] }));
 };
 
 const listarDashboard = async (clienteId, ano) => {
@@ -91,6 +121,7 @@ const listarDashboard = async (clienteId, ano) => {
     SELECT
       a.id as auditoria_id,
       a.dt_auditoria,
+      MONTH(a.dt_auditoria) - 1 AS mes_index,
       a.st_auditoria,
       ts.id_topico_original as topico_id,
       ts.ordem_topico AS ordem_topico,
@@ -126,19 +157,20 @@ const dataAuditoriaPorCliente = async (clienteId) => {
   return rows;
 };
 
-const finalizarAuditoria = async (id) => {
-  const query = "UPDATE auditorias SET st_auditoria = 'F' WHERE id = ?";
-  const [result] = await connection.query(query, [id]);
+// Só finaliza auditorias em andamento: uma auditoria cancelada não pode ser "ressuscitada".
+const finalizarAuditoria = async (id, conn = connection) => {
+  const query = "UPDATE auditorias SET st_auditoria = 'F' WHERE id = ? AND st_auditoria = 'A'";
+  const [result] = await conn.query(query, [id]);
   return result.affectedRows;
 };
 
-const cancelarAuditoria = async (id) => {
+const cancelarAuditoria = async (id, conn = connection) => {
   const query = "UPDATE auditorias SET st_auditoria = 'C' WHERE id = ?";
-  const [result] = await connection.query(query, [id]);
+  const [result] = await conn.query(query, [id]);
   return result.affectedRows;
 };
 
-const buscarAuditoriaMesmoMes = async (clienteId, dataAuditoria) => {
+const buscarAuditoriaMesmoMes = async (clienteId, dataAuditoria, conn = connection) => {
   const query = `
     SELECT id, dt_auditoria, st_auditoria
     FROM auditorias
@@ -150,13 +182,15 @@ const buscarAuditoriaMesmoMes = async (clienteId, dataAuditoria) => {
     ORDER BY dt_auditoria DESC, id DESC
     LIMIT 1;
   `;
-  const [rows] = await connection.query(query, [clienteId, dataAuditoria, dataAuditoria]);
+  const [rows] = await conn.query(query, [clienteId, dataAuditoria, dataAuditoria]);
   return rows?.[0] || null;
 };
 
 module.exports = {
   cadastrarAuditoria,
   listaAuditorias,
+  buscarAuditoriaPorId,
+  perguntaPertenceAAuditoria,
   salvarOuAtualizarResposta,
   listaAuditoriaPorID,
   listarDashboard,

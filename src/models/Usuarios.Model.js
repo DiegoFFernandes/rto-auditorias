@@ -38,6 +38,15 @@ const excluirUsuario = async (id) => {
   return result.affectedRows;
 };
 
+const contarVinculos = async (id) => {
+  const query = `
+    SELECT
+      (SELECT COUNT(*) FROM auditorias WHERE id_usuario = ?) AS auditorias,
+      (SELECT COUNT(*) FROM topicos WHERE usuario_id = ?) AS topicos`;
+  const [rows] = await connection.query(query, [id, id]);
+  return { auditorias: Number(rows[0].auditorias), topicos: Number(rows[0].topicos) };
+};
+
 const verificaUsuarioExistente = async (email, cpf, id = null) => {
   let query = 'SELECT * FROM usuarios WHERE (email = ? OR cpf = ?) LIMIT 1';
   const params = [email, cpf];
@@ -64,6 +73,7 @@ module.exports = {
   editarUsuario,
   alterarSenha,
   excluirUsuario,
+  contarVinculos,
   verificaUsuarioExistente,
   buscarUsuarioPorEmail
 };

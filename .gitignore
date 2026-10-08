@@ -98,9 +98,16 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-.env
-
+# Fotos antigas enviadas para o disco (hoje as evidências vão para o Cloudinary)
 uploads_img/
-*.img
-*.png
-*.webp
+
+# Dumps e backups de banco nunca devem ir para o git (contêm dados reais).
+# Exceções: o dump de exemplo com dados fictícios e as migrations versionadas.
+*.sql
+!db_exemplo.sql
+!sql_migrations/*.sql
+backup_*
+dump_*
+
+# Arquivos de ambiente com segredos (o .env.example e os exemplo.env.txt continuam versionados)
+.env.local
