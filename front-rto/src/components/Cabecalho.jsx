@@ -1,16 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
 import { FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
+import { usePwaInstall } from '../contexts/PwaInstallContext';
 import logo from '../assets/logo.png';
 import '../styles/Cabecalho/index.css';
 
 function Cabecalho() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAuthenticated, userData, logout } = useAuth();
+  const { podeInstalar, instalar } = usePwaInstall();
   const sidebarRef = useRef(null);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleInstalarApp = async () => {
+    await instalar();
+    setSidebarOpen(false);
   };
 
   const handleLogout = () => {
@@ -50,6 +57,11 @@ function Cabecalho() {
 
             <div ref={sidebarRef} className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
               <p className="sidebar-nome-usuario">Olá, {userData.nome}</p>
+              {podeInstalar && (
+                <button onClick={handleInstalarApp} className="botao-instalar-app">
+                  Instalar aplicativo
+                </button>
+              )}
               <button onClick={handleLogout} className="botao-logout">
                 Logout
               </button>

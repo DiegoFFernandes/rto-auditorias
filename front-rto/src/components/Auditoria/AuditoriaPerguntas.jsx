@@ -1,8 +1,4 @@
 import React from 'react';
-import Radio from '@mui/material/Radio';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 
 import '../../styles/Auditorias/index.css';
 
@@ -16,28 +12,30 @@ const opcoes = [
 const AuditoriaPerguntas = ({ pergunta, respostaSelecionada, onRespostaChange }) => (
   <div className="card-content">
     <h2 className="question-title">
-      {pergunta.ordem_pergunta} - {pergunta.descricao_pergunta}
+      <span className="question-numero">{pergunta.ordem_pergunta}</span>
+      <span>{pergunta.descricao_pergunta}</span>
     </h2>
-    <div className="options-container">
-      {opcoes.map(opcao => (
-        <div
-          key={opcao.valor}
-          className={`option-item ${respostaSelecionada === opcao.valor ? 'selected' : ''}`}
-          onClick={() => onRespostaChange(pergunta.id, opcao.valor)}
-        >
-          <FormControlLabel
-            control={
-              <Radio
-                checked={respostaSelecionada === opcao.valor}
-                value={opcao.valor}
-                icon={<RadioButtonUncheckedIcon className="radio-icon" />}
-                checkedIcon={<RadioButtonCheckedIcon className="radio-icon checked" />}
-              />
-            }
-            label={<span className="option-label">{opcao.texto}</span>}
-          />
-        </div>
-      ))}
+    <div className="options-container" role="radiogroup" aria-label="Resposta da pergunta">
+      {opcoes.map(opcao => {
+        const selecionada = respostaSelecionada === opcao.valor;
+        return (
+          <label
+            key={opcao.valor}
+            className={`option-item option-${opcao.valor}${selecionada ? ' selected' : ''}`}
+          >
+            <input
+              type="radio"
+              className="option-input"
+              name={`resposta-${pergunta.id}`}
+              value={opcao.valor}
+              checked={selecionada}
+              onChange={() => onRespostaChange(pergunta.id, opcao.valor)}
+            />
+            <span className="option-marca" aria-hidden="true" />
+            <span className="option-label">{opcao.texto}</span>
+          </label>
+        );
+      })}
     </div>
   </div>
 );

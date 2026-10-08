@@ -1,4 +1,5 @@
 import { useMemo, useEffect } from "react";
+import { FaCamera } from "react-icons/fa";
 
 import '../../styles/Evidencias/index.css';
 
@@ -57,12 +58,12 @@ const AuditoriaEvidencias = ({
             }}
             ref={fileInputRef}
           />
-          <span className="foto-upload-button">+ Adicionar Foto(s)</span>
+          <span className="foto-upload-button"><FaCamera aria-hidden="true" /> Adicionar foto(s)</span>
         </label>
 
         {fotos.length > 0 && (
           <div className="foto-feedback">
-            <span className="foto-status-badge">{fotos.length} foto(s) carregada(s)</span>
+            <span className="foto-status-badge">{fotos.length} foto(s) anexada(s)</span>
           </div>
         )}
 
@@ -77,6 +78,7 @@ const AuditoriaEvidencias = ({
               <button
                 type="button"
                 className="foto-remove-button"
+                aria-label={`Remover foto ${index + 1}`}
                 onClick={() => handleRemoveFoto(questionId, index)}
               >
                 &times;
@@ -88,12 +90,12 @@ const AuditoriaEvidencias = ({
 
       <div className="observacao-container">
         <label htmlFor={`observacao-${questionId}`} className="observacao-label">
-          Observação:
+          Observação
         </label>
         <textarea
           id={`observacao-${questionId}`}
           className="observacao-textarea"
-          placeholder="Digite aqui sua observação..."
+          placeholder="Digite aqui sua observação (opcional)"
           rows={3}
           value={observacao}
           onChange={(e) => handleObservacaoChange(questionId, e.target.value)}

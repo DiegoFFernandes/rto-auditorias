@@ -1,148 +1,74 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { usePwaInstall } from "../contexts/PwaInstallContext";
+import { isDispositivoMovel } from "../utils/dispositivo";
 import "../styles/InstalarPwa/index.css";
 
-const isStandalone = () => {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-};
+const ATRASO_MS = 3000;
 
-const resolveManifestUrl = () => {
-  if (typeof window === "undefined") return null;
-  try {
-    return new URL("/manifest.json", window.location.origin).href;
-  } catch {
-    return null;
-  }
-};
+// Rotas em que nunca interrompemos o usuário (login e auditoria em andamento).
+const rotaPermiteSugestao = (pathname) =>
+  pathname !== "/login" && !pathname.startsWith("/auditorias/");
 
 function InstalarPwa() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [isAlreadyInstalled, setIsAlreadyInstalled] = useState(isStandalone());
-  const hasPromptedRef = useRef(false);
+  const { isAuthenticated } = useAuth();
+  const { pathname } = useLocation();
+  const { podeInstalar, mostrarDicaIos, sugestaoLiberada, instalar, adiarSugestao } = usePwaInstall();
+  const [instalando, setInstalando] = useState(false);
+  const [atrasoCumprido, setAtrasoCumprido] = useState(false);
+
+  // A sugestão automática só aparece no celular, para quem já entrou e não está no meio de uma auditoria.
+  // No computador o botão "Instalar aplicativo" fica no menu do usuário, sem interromper ninguém.
+  const deveSugerir =
+    isAuthenticated &&
+    isDispositivoMovel() &&
+    sugestaoLiberada &&
+    rotaPermiteSugestao(pathname) &&
+    (podeInstalar || mostrarDicaIos);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault();
-      setDeferredPrompt(event);
-    };
-
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleAppInstalled = () => {
-      setIsAlreadyInstalled(true);
-      setShowModal(false);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener("appinstalled", handleAppInstalled);
-    return () => window.removeEventListener("appinstalled", handleAppInstalled);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (isStandalone()) {
-      setIsAlreadyInstalled(true);
-      return;
+    if (!deveSugerir) {
+      setAtrasoCumprido(false);
+      return undefined;
     }
+    const timerId = window.setTimeout(() => setAtrasoCumprido(true), ATRASO_MS);
+    return () => window.clearTimeout(timerId);
+  }, [deveSugerir]);
 
-    const checkInstalled = async () => {
-      if (!navigator.getInstalledRelatedApps) return;
-
-      try {
-        const relatedApps = await navigator.getInstalledRelatedApps();
-        const manifestUrl = resolveManifestUrl();
-
-        const alreadyInstalled = relatedApps.some((app) => {
-          if (manifestUrl && app.url) return app.url === manifestUrl;
-          if (app.id) return app.id === manifestUrl || app.id === window.location.origin;
-          return false;
-        });
-
-        if (alreadyInstalled) {
-          setIsAlreadyInstalled(true);
-          setShowModal(false);
-          setDeferredPrompt(null);
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("Falha ao verificar apps instalados:", error);
-        }
-      }
-    };
-
-    checkInstalled();
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (isStandalone() || isAlreadyInstalled) return;
-
-    if (hasPromptedRef.current) return;
-
-    if (deferredPrompt && !showModal) {
-      const timerId = window.setTimeout(() => {
-        if (hasPromptedRef.current) return;
-        hasPromptedRef.current = true;
-        setShowModal(true);
-      }, 800);
-
-      return () => {
-        window.clearTimeout(timerId);
-      };
-    }
-  }, [deferredPrompt, showModal, isAlreadyInstalled]);
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-
-    setIsInstalling(true);
-
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-
-    if (outcome === "accepted") {
-      setDeferredPrompt(null);
-      setShowModal(false);
-      setIsAlreadyInstalled(true);
-    }
-
-    setIsInstalling(false);
-  };
-
-  const handleCancel = () => {
-    setShowModal(false);
-  };
-
-  if (!showModal || isAlreadyInstalled) {
+  if (!deveSugerir || !atrasoCumprido) {
     return null;
   }
 
+  const handleInstalar = async () => {
+    setInstalando(true);
+    await instalar();
+    setInstalando(false);
+  };
+
+  // No iOS não existe o prompt nativo: orientamos o caminho manual pelo menu Compartilhar.
+  const usarDicaIos = !podeInstalar && mostrarDicaIos;
+
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <h2>Instalar Aplicativo Consultech</h2>
-        <div className="modal-actions">
-          <button onClick={handleCancel} className="btn-cancelar" disabled={isInstalling}>
-            Cancelar
+    <div className="pwa-banner" role="dialog" aria-label="Instalar aplicativo">
+      <img src="/pwa-192.png" alt="" className="pwa-banner-icone" />
+      <div className="pwa-banner-texto">
+        <strong>Instale o app Consultech</strong>
+        <span>
+          {usarDicaIos
+            ? "Toque em Compartilhar e depois em “Adicionar à Tela de Início”."
+            : "Acesso rápido, em tela cheia, direto da tela inicial."}
+        </span>
+      </div>
+      <div className="pwa-banner-acoes">
+        <button type="button" className="pwa-btn-secundario" onClick={adiarSugestao} disabled={instalando}>
+          {usarDicaIos ? "Entendi" : "Agora não"}
+        </button>
+        {!usarDicaIos && (
+          <button type="button" className="pwa-btn-primario" onClick={handleInstalar} disabled={instalando}>
+            {instalando ? "Instalando..." : "Instalar"}
           </button>
-          <button onClick={handleInstall} className="btn-excluir" disabled={isInstalling}>
-            {isInstalling ? "Instalando..." : "Instalar"}
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );

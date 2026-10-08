@@ -338,3 +338,218 @@ tbody tr:hover {
 @media (max-width: 480px) {
   .lista-auditorias-container { padding: 4px; }
 }
+
+/* ==========================================================================
+   Lista de auditorias - tablet e celular/PWA
+   (regras restritas a .lista-auditorias-container para não afetar outras telas)
+   ========================================================================== */
+
+/* Tablet: tabela mais compacta */
+@media (max-width: 900px) {
+  .lista-auditorias-container thead th {
+    padding: 9px 8px;
+    font-size: 0.8rem;
+  }
+
+  .lista-auditorias-container tbody td {
+    padding: 8px;
+    font-size: 0.82rem;
+  }
+
+  .lista-auditorias-container .status-badge {
+    width: auto;
+    min-width: 96px;
+    min-height: 30px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+  }
+
+  .lista-auditorias-container .btn-pdf,
+  .lista-auditorias-container .btn-continuar,
+  .lista-auditorias-container .btn-cancelar-auditoria {
+    min-width: 0;
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    gap: 6px;
+  }
+}
+
+/* Celular / PWA: cada auditoria vira um cartão compacto */
+@media (max-width: 600px) {
+  .lista-auditorias-container {
+    padding: 4px 10px 20px;
+  }
+
+  .lista-auditorias-container .container {
+    margin: 8px auto 0;
+  }
+
+  .lista-auditorias-container .filtro-container {
+    margin-bottom: 10px;
+  }
+
+  .lista-auditorias-container .filtro-input {
+    padding: 9px 14px;
+    font-size: 16px; /* 16px evita o zoom automático do iPhone ao focar o campo */
+    border-radius: 10px;
+  }
+
+  .lista-auditorias-container .tabela-container {
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .lista-auditorias-container tbody tr {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "empresa empresa status"
+      "id cnpj data"
+      "acoes acoes acoes";
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 4px;
+    margin-bottom: 10px;
+    padding: 12px;
+    border: 1px solid #e6dde1;
+    border-radius: 12px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .lista-auditorias-container tbody tr:hover {
+    background-color: #fff;
+  }
+
+  .lista-auditorias-container tbody td {
+    display: block;
+    padding: 0;
+    border: none;
+    font-size: 0.78rem;
+    color: #666;
+    text-align: left;
+  }
+
+  /* o rótulo "EMPRESA:", "CNPJ:" etc. não é mais necessário: o cartão já agrupa as informações */
+  .lista-auditorias-container tbody td::before {
+    content: none;
+  }
+
+  .lista-auditorias-container .col-empresa {
+    grid-area: empresa;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.25;
+  }
+
+  .lista-auditorias-container .col-status {
+    grid-area: status;
+    flex-direction: row;
+  }
+
+  .lista-auditorias-container .col-id {
+    grid-area: id;
+    font-weight: 700;
+    color: #660c39;
+  }
+
+  .lista-auditorias-container .col-id::before {
+    content: "#";
+  }
+
+  .lista-auditorias-container .col-cnpj {
+    grid-area: cnpj;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .lista-auditorias-container .col-data {
+    grid-area: data;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .lista-auditorias-container .status-badge {
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    white-space: nowrap;
+  }
+
+  .lista-auditorias-container td.tabela-acoes {
+    grid-area: acoes;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 8px;
+    width: auto;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid #f0e4ea;
+  }
+
+  /* botões principais dividem a largura; "Cancelar" vira um botão só com o ícone */
+  .lista-auditorias-container .tabela-acoes .btn-continuar,
+  .lista-auditorias-container .tabela-acoes .btn-pdf {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+    min-height: 36px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+  }
+
+  .lista-auditorias-container .tabela-acoes .btn-cancelar-auditoria {
+    order: 2;
+    flex: 0 0 auto;
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 8px;
+  }
+
+  .lista-auditorias-container .tabela-acoes .btn-cancelar-auditoria .btn-texto {
+    display: none;
+  }
+
+  /* mensagem de "nenhuma auditoria encontrada" ocupa o cartão inteiro */
+  .lista-auditorias-container .td-vazio {
+    grid-column: 1 / -1;
+    padding: 18px 0;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  .lista-auditorias-container .pagination {
+    margin-top: 6px;
+    gap: 4px;
+  }
+
+  .lista-auditorias-container .pagination button {
+    padding: 8px 12px;
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  .lista-auditorias-container .pagination span {
+    margin: 0 6px;
+    font-size: 0.85rem;
+  }
+}
+
+/* CNPJ e data nunca quebram em duas linhas */
+.lista-auditorias-container .col-cnpj,
+.lista-auditorias-container .col-data {
+  white-space: nowrap;
+}

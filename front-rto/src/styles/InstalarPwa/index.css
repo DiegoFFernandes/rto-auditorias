@@ -79,3 +79,104 @@
   color: #fff;
   cursor: not-allowed;
 }
+
+/* ---- Banner de instalação do app (não bloqueia a tela) ---- */
+.pwa-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px 14px;
+  background-color: #fff;
+  border: 1px solid #e3d6dc;
+  border-left: 4px solid #660c39;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  animation: pwa-banner-entrada 0.25s ease-out;
+}
+
+@keyframes pwa-banner-entrada {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pwa-banner-icone {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.pwa-banner-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pwa-banner-texto strong {
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.pwa-banner-texto span {
+  color: #666;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.pwa-banner-acoes {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pwa-banner-acoes button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.pwa-btn-primario {
+  background-color: #660c39;
+  color: #fff;
+}
+
+.pwa-btn-primario:hover:not(:disabled) {
+  background-color: #7d1046;
+}
+
+.pwa-btn-secundario {
+  background-color: transparent;
+  color: #666;
+}
+
+.pwa-btn-secundario:hover:not(:disabled) {
+  background-color: #f0e9ed;
+}
+
+.pwa-banner-acoes button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .pwa-banner {
+    flex-wrap: wrap;
+  }
+
+  .pwa-banner-acoes {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

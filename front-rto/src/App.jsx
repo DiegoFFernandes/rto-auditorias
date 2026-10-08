@@ -16,6 +16,7 @@ import GerenciarTopicos from "./components/GerenciarTopicos";
 
 import { ToastContainer } from "react-toastify";
 import { AuthProvider } from "./contexts/AuthContext";
+import { PwaInstallProvider } from "./contexts/PwaInstallContext";
 import InstalarPwa from "./components/InstalarPwa";
 
 function NavigationHandler() {
@@ -52,6 +53,7 @@ function LayoutComCabecalho() {
 function App() {
   return (
     <AuthProvider >
+      <PwaInstallProvider>
       <BrowserRouter basename="/">
         <NavigationHandler />
         <InstalarPwa />
@@ -74,6 +76,7 @@ function App() {
         </Routes>
         <ToastContainer />
       </BrowserRouter>
+      </PwaInstallProvider>
     </AuthProvider>
   );
 }

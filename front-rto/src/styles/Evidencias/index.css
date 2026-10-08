@@ -1,18 +1,17 @@
 .evidencias-wrapper {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--divider-color);
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #efe6ea;
 }
 
 .foto-upload-container {
-  margin-top: 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .foto-upload-label {
-  display: inline-block;
+  display: block;
 }
 
 .foto-upload-input {
@@ -20,90 +19,92 @@
 }
 
 .foto-upload-button {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  background: var(--primary-color);
-  color: #fff;
+  min-height: 46px;
   padding: 8px 14px;
+  border: 2px dashed #c9aebb;
   border-radius: 10px;
-  font-weight: 600;
+  background-color: #faf6f8;
+  color: #660c39;
+  font-size: 0.9rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: filter .15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.foto-upload-button:hover {
-  filter: brightness(0.92);
+@media (hover: hover) {
+  .foto-upload-button:hover {
+    background-color: #f6e9ef;
+    border-color: #660c39;
+  }
 }
 
+.foto-upload-button:active {
+  background-color: #f6e9ef;
+}
 
 .foto-feedback {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 10px;
 }
 
 .foto-status-badge {
   display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid #a5d6a7;
+  border-radius: 999px;
   background: #e7f6ec;
   color: #1b5e20;
-  border: 1px solid #a5d6a7;
-  padding: 4px 4px;
-  border-radius: 999px;
-}
-
-.foto-file-name {
-  font-size: 14px;
-  color: #333;
-  word-break: break-all;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .fotos-preview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 12px;
-  margin-top: 1px;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
 }
 
 .foto-preview-item {
   position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   aspect-ratio: 1 / 1;
-  border: 1px solid #e0e0e0;
+  overflow: hidden;
+  border: 1px solid #e6dde1;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .foto-preview-item .foto-preview-img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .foto-remove-button {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  font-size: 16px;
-  font-weight: bold;
-  line-height: 24px;
-  text-align: center;
-  cursor: pointer;
-  padding: 0;
+  top: 4px;
+  right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
   transition: background-color 0.2s, transform 0.2s;
 }
 
@@ -113,40 +114,53 @@
 }
 
 .observacao-container {
-  margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-top: 16px;
+}
+
+.foto-upload-container + .observacao-container {
+  margin-top: 14px;
 }
 
 .observacao-label {
-  font-weight: 600;
-  color: #333;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #495057;
 }
 
 .observacao-textarea {
   width: 100%;
-  min-height: 92px;
-  resize: vertical;
+  min-height: 88px;
   padding: 10px 12px;
-  border: 1px solid #d7d7d7;
+  border: 1px solid #ced4da;
   border-radius: 10px;
-  font-size: 0.75rem;
+  font-family: inherit;
+  font-size: 1rem; /* 16px evita o zoom automático do iPhone ao focar o campo */
+  resize: vertical;
   outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .observacao-textarea:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(247, 125, 51, 0.12);
+  border-color: #660c39;
+  box-shadow: 0 0 0 3px rgba(102, 12, 57, 0.15);
 }
 
-@media (max-width: 480px) {
-  .fotos-preview-grid {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+@media (max-width: 600px) {
+  .evidencias-wrapper {
+    margin-top: 16px;
+    padding-top: 16px;
   }
 
-  .observacao-textarea::placeholder {
-    font-size: 0.5rem;
+  .fotos-preview-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .observacao-textarea {
+    min-height: 76px;
   }
 }

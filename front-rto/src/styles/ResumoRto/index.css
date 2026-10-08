@@ -490,3 +490,37 @@
     transform: translateY(-10px);
   }
 }
+
+/* Campo de empresa com busca (Autocomplete) */
+.rto-filtros.destacado .rto-campo-empresa {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rto-filtros.destacado .rto-campo-empresa label {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.rto-campo-empresa .selecionar-empresa {
+  width: 340px;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .rto-filtros.destacado .rto-campo-empresa {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
+  }
+
+  .rto-filtros.destacado .rto-campo-empresa label {
+    font-size: 0.95rem;
+  }
+
+  .rto-campo-empresa .selecionar-empresa {
+    width: 100%;
+  }
+}

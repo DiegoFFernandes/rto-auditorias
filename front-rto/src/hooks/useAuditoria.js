@@ -3,6 +3,19 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import api from '../api/api';
+import {
+    calcularPercentualTopico,
+    nivelDoPercentual,
+    NIVEL_SATISFATORIO,
+    NIVEL_RISCO,
+    NIVEL_INACEITAVEL,
+} from '../utils/classificacao';
+
+const CLASSIFICACAO_PARCIAL = {
+    [NIVEL_SATISFATORIO]: { classificacao: 'Satisfatório', cor: 'var(--success-color)' },
+    [NIVEL_RISCO]: { classificacao: 'Risco', cor: 'var(--warning-color)' },
+    [NIVEL_INACEITAVEL]: { classificacao: 'Crítico', cor: 'var(--error-color)' },
+};
 
 
 export const useAuditoria = () => {
@@ -173,7 +186,7 @@ export const useAuditoria = () => {
         if (!currentAuditId || isSavingRef.current) return;
 
         if (!respostasRef.current[perguntaId]) {
-            toast.warn("Selecione uma resposta (CF, PC, etc.) antes de adicionar fotos.");
+            toast.warn("Selecione uma resposta (Conforme, Não Conforme, etc.) antes de adicionar fotos.");
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
@@ -348,20 +361,12 @@ export const useAuditoria = () => {
 
     const resultadoParcialTopico = useMemo(() => {
         if (!currentTopic || !respostas || !currentTopic.perguntas) return null;
-        const perguntasDoTopico = currentTopic.perguntas;
-        const respostasConsideradas = perguntasDoTopico.filter(p => respostas[p.id] && respostas[p.id] !== 'NE');
 
-        if (respostasConsideradas.length === 0) return null;
+        const percentual = calcularPercentualTopico(currentTopic.perguntas, respostas);
+        if (percentual === null) return null;
 
-        const conformes = respostasConsideradas.filter(p => respostas[p.id] === 'CF').length;
-        const conformidadeParcial = respostasConsideradas.filter(p => respostas[p.id] === 'PC').length;
-        const totalPontos = conformes + (conformidadeParcial * 0.5);
-        const percentual = Math.round((totalPontos / respostasConsideradas.length) * 100);
-
-        let classificacao, cor;
-        if (percentual >= 80) { classificacao = 'Satisfatório'; cor = 'var(--success-color)'; }
-        else if (percentual >= 50) { classificacao = 'Risco'; cor = 'var(--warning-color)'; }
-        else { classificacao = 'Crítico'; cor = 'var(--error-color)'; }
+        const nivel = nivelDoPercentual(percentual);
+        const { classificacao, cor } = CLASSIFICACAO_PARCIAL[nivel];
 
         return { percentual, classificacao, cor };
     }, [currentTopic, respostas]);

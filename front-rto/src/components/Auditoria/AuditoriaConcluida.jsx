@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import HomeIcon from '@mui/icons-material/Home';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 import '../../styles/Auditorias/index.css';
 
@@ -9,7 +10,8 @@ const AuditoriaConcluida = ({ onGerarPdf }) => (
   <div className="auditorias-page">
     <div className="auditorias-container">
       <div className="success-card">
-        <h1 className="success-title">Auditoria Concluída!</h1>
+        <CheckCircleOutlineIcon className="success-icone" />
+        <h1 className="success-title">Auditoria concluída!</h1>
         <p className="success-message">A sua auditoria foi salva com sucesso no sistema.</p>
         <div className="success-actions">
           <Link to="/" className="nav-button back">

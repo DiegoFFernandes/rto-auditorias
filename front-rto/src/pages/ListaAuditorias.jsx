@@ -228,11 +228,11 @@ const ListaAuditorias = () => {
                                     {currentAuditorias.length > 0 ? (
                                         currentAuditorias.map(auditoria => (
                                             <tr key={auditoria.id}>
-                                                <td data-label="ID">{auditoria.id}</td>
-                                                <td data-label="Empresa">{auditoria.cliente.razao_social}</td>
-                                                <td data-label="CNPJ">{auditoria.cliente.cnpj}</td>
-                                                <td data-label="Data">{formatarData(auditoria.dt_auditoria)}</td>
-                                                <td data-label="Status" className="status-cell">
+                                                <td data-label="ID" className="col-id">{auditoria.id}</td>
+                                                <td data-label="Empresa" className="col-empresa">{auditoria.cliente.razao_social}</td>
+                                                <td data-label="CNPJ" className="col-cnpj">{auditoria.cliente.cnpj}</td>
+                                                <td data-label="Data" className="col-data">{formatarData(auditoria.dt_auditoria)}</td>
+                                                <td data-label="Status" className="status-cell col-status">
                                                     <span className={`status-badge status-${auditoria.st_auditoria}`}>
                                                         {getStatusText(auditoria.st_auditoria)}
                                                     </span>
@@ -246,7 +246,7 @@ const ListaAuditorias = () => {
                                                             title={auditoria.st_auditoria === 'C' ? 'Auditoria cancelada' : 'Continuar Auditoria'}
                                                         >
                                                             {isLoadingContinue === auditoria.id ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faPlay} />}
-                                                            {isLoadingContinue === auditoria.id ? '' : ' Continuar'}
+                                                            {isLoadingContinue !== auditoria.id && <span className="btn-texto">Continuar</span>}
                                                         </button>
                                                     )}
                                                     {isAdmin && auditoria.st_auditoria !== 'C' && (
@@ -255,9 +255,10 @@ const ListaAuditorias = () => {
                                                             className="btn-cancelar-auditoria"
                                                             disabled={isCancelling === auditoria.id}
                                                             title="Cancelar Auditoria"
+                                                            aria-label="Cancelar auditoria"
                                                         >
                                                             {isCancelling === auditoria.id ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faBan} />}
-                                                            {isCancelling === auditoria.id ? '' : ' Cancelar'}
+                                                            {isCancelling !== auditoria.id && <span className="btn-texto">Cancelar</span>}
                                                         </button>
                                                     )}
                                                     {isAdmin && auditoria.st_auditoria === 'C' && (
@@ -265,8 +266,10 @@ const ListaAuditorias = () => {
                                                             className="btn-cancelar-auditoria btn-disabled"
                                                             disabled={true}
                                                             title="Auditoria já cancelada"
+                                                            aria-label="Auditoria já cancelada"
                                                         >
-                                                            <FontAwesomeIcon icon={faBan} /> Cancelar
+                                                            <FontAwesomeIcon icon={faBan} />
+                                                            <span className="btn-texto">Cancelar</span>
                                                         </button>
                                                     )}
                                                     {auditoria.st_auditoria === 'F' && (
@@ -277,7 +280,7 @@ const ListaAuditorias = () => {
                                                             title="Gerar PDF da Auditoria"
                                                         >
                                                             {isGeneratingPdf === auditoria.id ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faFilePdf} />}
-                                                            {isGeneratingPdf === auditoria.id ? '' : ' Ver PDF'}
+                                                            {isGeneratingPdf !== auditoria.id && <span className="btn-texto">Ver PDF</span>}
                                                         </button>
                                                     )}
                                                 </td>
@@ -285,7 +288,7 @@ const ListaAuditorias = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="5">Nenhuma auditoria encontrada com os filtros atuais.</td>
+                                            <td colSpan="6" className="td-vazio">Nenhuma auditoria encontrada com os filtros atuais.</td>
                                         </tr>
                                     )}
                                 </tbody>

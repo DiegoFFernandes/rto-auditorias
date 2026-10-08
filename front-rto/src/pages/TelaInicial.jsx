@@ -1,5 +1,4 @@
 import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFileCirclePlus,
   faMagnifyingGlass,
@@ -7,57 +6,72 @@ import {
   faCalendarDays,
   faGear,
 } from '@fortawesome/free-solid-svg-icons';
-import { Link } from 'react-router-dom';
 
+import { useAuth } from '../contexts/AuthContext';
+import MenuOpcoes from '../components/MenuOpcoes';
 import '../styles/TelaInicial/index.css';
 
+const OPCOES = [
+  {
+    to: '/criar-auditoria',
+    icone: faFileCirclePlus,
+    titulo: 'Criar Auditoria',
+    descricao: 'Selecione a empresa e o período da nova auditoria.',
+    destaque: true,
+  },
+  {
+    to: '/listar-auditorias',
+    icone: faMagnifyingGlass,
+    titulo: 'Consultar Auditorias',
+    descricao: 'Consulte, continue ou gere o PDF das auditorias.',
+  },
+  {
+    to: '/resumo-rto',
+    icone: faChartColumn,
+    titulo: 'Relatórios',
+    descricao: 'Veja o resultado anual por empresa e processo.',
+  },
+  {
+    to: '/agenda-auditorias',
+    icone: faCalendarDays,
+    titulo: 'Agenda de Auditorias',
+    descricao: 'Visualize e gerencie as auditorias agendadas.',
+  },
+  {
+    to: '/administracao',
+    icone: faGear,
+    titulo: 'Administração',
+    descricao: 'Tópicos, perguntas, clientes e usuários do sistema.',
+    somenteAdmin: true,
+  },
+];
+
+const NOME_DO_PERFIL = {
+  ADM: 'Administrador',
+  AUD: 'Auditor',
+};
+
+const primeiroNome = (nome) => (nome || '').trim().split(/\s+/)[0];
+
 const TelaInicial = () => {
-  const usuario = JSON.parse(localStorage.getItem('userData'));
+  const { userData } = useAuth();
+  const ehAdmin = userData?.role === 'ADM';
+  const opcoesVisiveis = OPCOES.filter((opcao) => !opcao.somenteAdmin || ehAdmin);
+  const nome = primeiroNome(userData?.nome);
 
   return (
-    <div className="container">
-      <main className="opcoes">
-        <h2>O que você deseja fazer?</h2>
-
-        <div className="botoes">
-          {/* Opção 2: Criar Novo Ciclo de Formulários */}
-          <Link to="/criar-auditoria" className="card-opcao">
-            <FontAwesomeIcon icon={faFileCirclePlus} />
-            <h3>Criar Auditoria</h3>
-            <p>Selecione a empresa e o período da nova auditoria.</p>
-          </Link>
-
-          {/* Opção 3: Ver Auditorias */}
-          <Link to="/listar-auditorias" className="card-opcao">
-            <FontAwesomeIcon icon={faMagnifyingGlass} />
-            <h3>Consultar Auditorias</h3>
-            <p>Consulte auditorias existentes</p>
-          </Link>
-
-          {/* Opção 4: Ver Relatorios */}
-          <Link to="/resumo-rto" className="card-opcao">
-            <FontAwesomeIcon icon={faChartColumn} />
-            <h3>Relatórios</h3>
-            <p>Veja os Relatórios Detalhados</p>
-          </Link>
-
-          {/* Opção 5: Agenda de Auditorias */}
-          <Link to="/agenda-auditorias" className="card-opcao">
-            <FontAwesomeIcon icon={faCalendarDays} />
-            <h3>Agenda de Auditorias</h3>
-            <p>Visualize e gerencie a agenda das auditorias.</p>
-          </Link>
-
-          {/* Card para Administração - visível apenas para ADM */}
-          {usuario.role === 'ADM' && (
-            <Link to="/administracao" className="card-opcao">
-              <FontAwesomeIcon icon={faGear} />
-              <h3>Administração</h3>
-              <p>Gerencie tópicos, perguntas e usuários do sistema.</p>
-            </Link>
-          )}
+    <div className="home">
+      <header className="home-saudacao">
+        <div>
+          <h2>{nome ? `Olá, ${nome}` : 'Olá'}</h2>
+          <p>O que você deseja fazer hoje?</p>
         </div>
-      </main>
+        {NOME_DO_PERFIL[userData?.role] && (
+          <span className="home-perfil">{NOME_DO_PERFIL[userData.role]}</span>
+        )}
+      </header>
+
+      <MenuOpcoes opcoes={opcoesVisiveis} ariaLabel="Menu principal" />
     </div>
   );
 };

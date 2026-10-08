@@ -1,0 +1,160 @@
+/* Cartões de atalho usados na Tela Inicial e na Administração */
+.menu-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  position: relative;
+  padding: 22px 20px;
+  background-color: #fff;
+  border: 1px solid #e6dde1;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  color: #333;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.menu-card-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background-color: #f6e9ef;
+  color: #660c39;
+  font-size: 1.5rem;
+}
+
+.menu-card-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.menu-card-texto strong {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.menu-card-texto small {
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: #666;
+}
+
+.menu-card-seta {
+  position: absolute;
+  top: 22px;
+  right: 20px;
+  font-size: 0.85rem;
+  color: #c9aebb;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Ação principal em destaque */
+.menu-card--destaque {
+  background: linear-gradient(135deg, #660c39 0%, #8a1a52 100%);
+  border-color: #660c39;
+  box-shadow: 0 6px 18px rgba(102, 12, 57, 0.28);
+}
+
+.menu-card--destaque .menu-card-icone {
+  background-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.menu-card--destaque .menu-card-texto strong {
+  color: #fff;
+}
+
+.menu-card--destaque .menu-card-texto small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.menu-card--destaque .menu-card-seta {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (hover: hover) {
+  .menu-card:hover {
+    border-color: #660c39;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+  }
+
+  .menu-card:hover .menu-card-seta {
+    color: #660c39;
+    transform: translateX(3px);
+  }
+
+  .menu-card--destaque:hover .menu-card-seta {
+    color: #fff;
+  }
+}
+
+.menu-card:active {
+  transform: scale(0.985);
+}
+
+.menu-card:focus-visible {
+  outline: 3px solid #f5795c;
+  outline-offset: 2px;
+}
+
+/* Celular / PWA: lista compacta que cabe na tela */
+@media (max-width: 600px) {
+  .menu-opcoes {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .menu-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .menu-card-icone {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    font-size: 1.15rem;
+  }
+
+  .menu-card-texto strong {
+    font-size: 1rem;
+  }
+
+  .menu-card-texto small {
+    font-size: 0.8rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .menu-card-seta {
+    position: static;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-card,
+  .menu-card-seta {
+    transition: none;
+  }
+}

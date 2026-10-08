@@ -1,98 +1,228 @@
-.auditoria-header-info {
-  background-color: #ffffff;
-  border-radius: 8px;
+/* ==========================================================================
+   Cabeçalho da auditoria (classes cab-aud-*)
+   ========================================================================== */
+
+.cab-aud {
+  width: 100%;
   max-width: 1024px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  font-family: Arial, sans-serif;
-  margin: 10px auto;
+  margin: 10px auto 0;
+  padding: 16px 20px;
+  background-color: #fff;
+  border: 1px solid #e6dde1;
+  border-left: 4px solid #660c39;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.cliente-nome {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-top: 0;
-  margin-bottom: 5px;
+.cab-aud-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.cliente-cnpj {
-  font-size: 1rem;
-  color: #555;
+.cab-aud-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #f6e9ef;
+  color: #660c39;
+  font-size: 1.1rem;
+}
+
+.cab-aud-titulos {
+  min-width: 0;
+}
+
+.cab-aud-nome {
   margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.25;
+  color: #660c39;
+  overflow-wrap: anywhere;
 }
 
-.divider {
-  border: none;
-  height: 1px;
-  background-color: #ddd;
-  margin: 15px 0;
+.cab-aud-cnpj {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: #777;
 }
 
-.auditoria-header-info p {
-  margin: 8px 0;
-  font-size: 1rem;
-  color: #555;
-}
-
-.auditoria-header-info p strong {
-  color: #000;
-  font-weight: bold;
-  margin-right: 5px;
-}
-
-.auditorias-grid {
+/* ---- Auditor e data ---- */
+.cab-aud-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
+.cab-aud-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background-color: #f6e9ef;
+  color: #660c39;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.cab-aud-chips li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Detalhes recolhidos ---- */
+.cab-aud-mais {
+  margin-top: 10px;
+}
+
+.cab-aud-mais summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 6px;
+  border: 1px solid #e3cdd8;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #660c39;
+  cursor: pointer;
+  user-select: none;
+  list-style: none; /* remove a setinha padrão do navegador */
+  transition: background-color 0.2s ease;
+}
+
+.cab-aud-mais summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ícone (+) que vira (−) quando o painel está aberto: indica que é um botão */
+.cab-aud-mais summary::before {
+  content: '+';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #660c39;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cab-aud-mais[open] summary::before {
+  content: '\2212';
+}
+
+@media (hover: hover) {
+  .cab-aud-mais summary:hover {
+    background-color: #f6e9ef;
+  }
+}
+
+.cab-aud-mais summary:active {
+  background-color: #f6e9ef;
+}
+
+.cab-aud-mais summary:focus-visible {
+  outline: 3px solid #f5795c;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.cab-aud-mais dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px 20px;
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  background-color: #faf6f8;
+  border-left: 3px solid #f5795c;
+  border-radius: 8px;
+}
+
+.cab-aud-mais dt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #8a6f7b;
+}
+
+.cab-aud-mais dd {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  color: #333;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Celular / PWA: bem compacto, para sobrar espaço às perguntas ---- */
 @media (max-width: 600px) {
-  .auditorias-grid {
-    flex-direction: column;
-  }
-  
-  .auditoria-card,
-  .loading-card,
-  .success-card,
-  .auditoria-header-info {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 8px; 
-    margin: 10px auto;
-    max-width: 600px;
-  }
-  
-  .auditoria-header-info p,
-  .cliente-nome,
-  .cliente-cnpj {
-    font-size: 0.9rem; 
+  .cab-aud {
+    margin: 6px auto 0;
+    padding: 10px 12px;
+    border-radius: 10px;
   }
 
-  .cliente-nome {
-    font-size: 1rem;
-    margin: 5px 0;
+  .cab-aud-topo {
+    gap: 10px;
   }
-}
 
-@media (max-width: 480px) {
-  .cliente-nome {
+  .cab-aud-icone {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+
+  .cab-aud-nome {
     font-size: 1rem;
   }
 
-  .auditoria-header-info p,
-  .cliente-cnpj {
-    font-size: 0.75rem; 
-  }
-}
-
-@media (max-width: 480px) {
-  .cliente-nome {
-    font-size: 1rem;
-  }
-
-  .cliente-cnpj strong p,
-  .auditoria-header-info p strong{
+  .cab-aud-cnpj {
     font-size: 0.75rem;
+  }
+
+  .cab-aud-chips {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .cab-aud-chips li {
+    padding: 3px 10px;
+    font-size: 0.75rem;
+  }
+
+  .cab-aud-mais {
+    margin-top: 6px;
+  }
+
+  .cab-aud-mais summary {
+    gap: 6px;
+    padding: 4px 11px 4px 5px;
+    font-size: 0.75rem;
+  }
+
+  .cab-aud-mais summary::before {
+    width: 18px;
+    height: 18px;
+    font-size: 0.9rem;
+  }
+
+  .cab-aud-mais dl {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 12px;
   }
 }

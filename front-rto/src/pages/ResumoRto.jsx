@@ -4,8 +4,10 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { FaFilePdf, FaSpinner } from "react-icons/fa";
 import usePdfExport from "../hooks/usePdfExport";
+import { getBackgroundColor, getTextColor, getChartColor, getMascoteImage } from "../utils/classificacao";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import PageCabecalho from "../components/Botoes/PageCabecalho";
+import SelecionarEmpresa from "../components/SelecionarEmpresa";
 import LoadingIndicator from "../components/LoadingIndicator";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
@@ -17,34 +19,6 @@ import logo from "../assets/logo3.png";
 import "../styles/ResumoRto/index.css";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, ChartDataLabels);
-
-const getTextColor = (value) => {
-  if (value === null) return '#333';
-  if (value >= 80) return '#fff';
-  if (value >= 50) return '#333';
-  return '#fff';
-};
-
-const getBackgroundColor = (value) => {
-  if (value === null) return '#bfbfbf';
-  if (value >= 80) return '#1ca41c';
-  if (value >= 50) return '#f2c037';
-  return '#dc3545';
-};
-
-const getChartColor = (value) => {
-  if (value === null) return '#999';
-  if (value >= 80) return '#1ca41c';
-  if (value >= 50) return '#f2c037';
-  return '#dc3545';
-};
-
-const getMascoteImage = (resultado) => {
-  if (resultado === null) return null;
-  if (resultado >= 80) return '/mascote2.png';
-  if (resultado >= 50) return '/mascote1.png';
-  return '/mascote3.png';
-};
 
 const ResumoRto = () => {
   const [empresas, setEmpresas] = useState([]);
@@ -59,7 +33,6 @@ const ResumoRto = () => {
   const doughnutChartRef = useRef(null);
   const barChartRef = useRef(null);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false));
-  const [empresaSelectWidth, setEmpresaSelectWidth] = useState(180);
 
   const isLoading = loading.empresas || loading.anos || loading.dashboard;
 
@@ -72,28 +45,6 @@ const ResumoRto = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  useEffect(() => {
-    if (isMobile) {
-      setEmpresaSelectWidth(180);
-      return;
-    }
-
-    if (typeof document === 'undefined') return;
-
-    const selectedEmpresa = empresas.find(emp => emp.id.toString() === empresaSelecionada)?.razao_social || 'Selecione';
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (!context) return;
-
-    context.font = '600 14px "Inter", sans-serif';
-    const textWidth = context.measureText(selectedEmpresa).width;
-    const padding = 48;
-    const minWidth = 160;
-    const maxWidth = 420;
-    const calculated = Math.min(Math.max(textWidth + padding, minWidth), maxWidth);
-    setEmpresaSelectWidth(calculated);
-  }, [empresaSelecionada, empresas, isMobile]);
 
   useEffect(() => {
     const fetchEmpresas = async () => {
@@ -355,19 +306,17 @@ const ResumoRto = () => {
       <section className="rto-bloco-geral">
         <header className="rto-cabecalho-principal">
           <div className="rto-filtros destacado">
-            <label>
-              Empresa:
-              <select
+            <div className="rto-campo rto-campo-empresa">
+              <label htmlFor="rto-empresa">Empresa:</label>
+              <SelecionarEmpresa
+                id="rto-empresa"
+                empresas={empresas}
                 value={empresaSelecionada}
-                onChange={e => setEmpresaSelecionada(e.target.value)}
-                style={!isMobile ? { width: `${empresaSelectWidth}px` } : undefined}
-              >
-                <option value="">Selecione</option>
-                {empresas.map(emp => (
-                  <option key={emp.id} value={emp.id}>{emp.razao_social}</option>
-                ))}
-              </select>
-            </label>
+                onChange={(empresa) => setEmpresaSelecionada(empresa ? String(empresa.id) : "")}
+                ariaLabel="Empresa"
+                placeholder="Buscar empresa..."
+              />
+            </div>
             <label>
               Ano:
               <select value={anoSelecionado} onChange={e => setAnoSelecionado(e.target.value)} disabled={!empresaSelecionada || anos.length === 0}>

@@ -1,26 +1,7 @@
-.cria-auditoria-container {
-  padding: 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.cria-auditoria-container form {
-  max-width: 800px;
-  margin: 15px auto 0 auto;
-  padding: 30px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.selecao-empresa h2, .dados-empresa h2 {
-  font-size: 1.25rem;
-  color: #343a40;
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
-  padding-bottom: 1rem;
-}
+/* ==========================================================================
+   Regras COMPARTILHADAS com outras telas (Clientes, Usuários, Tópicos, modais).
+   Não alterar sem conferir essas telas: .campo, .btn-enviar, .campo-vazio e .modal-*
+   ========================================================================== */
 
 .campo {
   margin-bottom: 1.5rem;
@@ -82,40 +63,6 @@
 
 .btn-enviar:hover {
   background-color: #85104a;
-}
-
-.dados-empresa {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  padding: 1.25rem;
-  border-radius: 8px;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-}
-
-.dados-empresa .info-cnpj {
-  color: #6c757d;
-  font-size: 1rem;
-  margin: 0;
-}
-
-.loading-state, .error-state {
-  text-align: center;
-  padding: 40px;
-  max-width: 800px;
-  margin: 40px auto;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.error-state {
-  background-color: #fff3f3;
-  border: 1px solid #ffcdd2;
-}
-
-.error-state h2 {
-  color: #c62828;
 }
 
 .modal-overlay {
@@ -192,24 +139,6 @@
 }
 
 @media (max-width: 768px) {
-  .cria-auditoria-container {
-    padding: 15px;
-  }
-
-  .cria-auditoria-container form {
-    padding: 20px;
-    margin: 10px auto;
-    box-shadow: none;
-    border-radius: 6px;
-  }
-
-  .selecao-empresa h2,
-  .dados-empresa h2 {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-  }
-
   .campo label {
     font-size: 0.95rem;
     margin-bottom: 6px;
@@ -227,31 +156,9 @@
     font-size: 1rem;
     border-radius: 5px;
   }
-
-  .dados-empresa {
-    padding: 1rem;
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .loading-state, 
-  .error-state {
-    padding: 25px;
-    margin: 20px auto;
-    font-size: 0.95rem;
-  }
 }
 
 @media (max-width: 480px) {
-  .cria-auditoria-container form {
-    padding: 15px;
-  }
-
-  .selecao-empresa h2,
-  .dados-empresa h2 {
-    font-size: 1rem;
-  }
-
   .campo input,
   .campo textarea,
   .campo select {
@@ -270,75 +177,319 @@
   }
 }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+/* ==========================================================================
+   Tela "Criar Auditoria" (classes ca-*, usadas somente aqui)
+   ========================================================================== */
+
+.ca-page {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
 }
 
-.modal-content {
+.ca-form {
+  margin-top: 20px;
+}
+
+/* ---- Cartões ---- */
+.ca-card {
   background-color: #fff;
-  padding: 24px;
+  border: 1px solid #e6dde1;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+}
+
+.ca-card-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-size: 1.05rem;
+  color: #660c39;
+}
+
+.ca-card-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: #f6e9ef;
+  color: #660c39;
+  font-size: 0.95rem;
+}
+
+/* ---- Layout: empresa à esquerda, dados à direita (telas grandes) ---- */
+.ca-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.ca-coluna-dados {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .ca-layout {
+    grid-template-columns: minmax(280px, 340px) 1fr;
+    gap: 20px;
+  }
+
+  .ca-card--empresa {
+    position: sticky;
+    top: 16px;
+  }
+
+  .ca-card {
+    padding: 24px;
+  }
+}
+
+/* ---- Resumo da empresa escolhida ---- */
+.ca-empresa-resumo {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background-color: #faf6f8;
+  border-left: 3px solid #f5795c;
+  border-radius: 8px;
+}
+
+.ca-empresa-resumo dt {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #8a6f7b;
+}
+
+.ca-empresa-resumo dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+  overflow-wrap: anywhere;
+}
+
+.ca-dica {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* ---- Campos ---- */
+.ca-grade {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.ca-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ca-campo label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #495057;
+}
+
+.ca-campo input,
+.ca-campo textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-color: #fff;
+  font-family: inherit;
+  font-size: 1rem; /* 16px evita o zoom automático do iPhone ao focar o campo */
+  color: #333;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ca-campo textarea {
+  resize: vertical;
+  min-height: 76px;
+}
+
+.ca-campo input:focus,
+.ca-campo textarea:focus {
+  outline: none;
+  border-color: #660c39;
+  box-shadow: 0 0 0 3px rgba(102, 12, 57, 0.15);
+}
+
+.ca-campo input[readonly] {
+  background-color: #f4f1f3;
+  color: #666;
+  cursor: default;
+}
+
+@media (min-width: 600px) {
+  .ca-grade {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ca-campo--cheio {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- Ação principal ---- */
+.ca-acoes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ca-btn-iniciar {
+  min-width: 260px;
+  padding: 14px 24px;
+  border: none;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 420px;
+  background: linear-gradient(135deg, #660c39 0%, #8a1a52 100%);
+  box-shadow: 0 6px 16px rgba(102, 12, 57, 0.28);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+@media (hover: hover) {
+  .ca-btn-iniciar:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 12, 57, 0.35);
+  }
+}
+
+.ca-btn-iniciar:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.ca-btn-iniciar:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ca-btn-iniciar:focus-visible {
+  outline: 3px solid #f5795c;
+  outline-offset: 2px;
+}
+
+/* ---- Aviso enquanto nenhuma empresa foi escolhida ---- */
+.ca-aguardando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 20px;
+  border: 2px dashed #d9c6cf;
+  border-radius: 14px;
+  color: #8a6f7b;
   text-align: center;
 }
 
-.modal-content h2 {
-  margin-bottom: 16px;
-  color: #333;
+.ca-aguardando svg {
+  font-size: 1.8rem;
+  color: #c9aebb;
 }
 
-.modal-content p {
-  margin-bottom: 24px;
-  color: #555;
-  line-height: 1.4;
+.ca-aguardando p {
+  margin: 0;
+  font-size: 0.95rem;
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+/* Em telas pequenas o aviso é desnecessário: o campo de empresa já está logo acima */
+@media (max-width: 899px) {
+  .ca-aguardando {
+    display: none;
+  }
 }
 
-.modal-actions button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+/* ---- Estado de erro ---- */
+.ca-estado-erro {
+  margin-top: 24px;
+  padding: 28px 20px;
+  text-align: center;
+  background-color: #fff3f3;
+  border: 1px solid #ffcdd2;
+  border-radius: 14px;
 }
 
-.modal-actions .btn-cancelar {
-  background-color: #e0e0e0;
-  color: #333;
+.ca-estado-erro h2 {
+  color: #c62828;
 }
 
-.modal-actions .btn-cancelar:hover {
-  background-color: #c8c8c8;
+/* ---- Celular / PWA ---- */
+@media (max-width: 600px) {
+  .ca-page {
+    padding: 0 12px 24px;
+  }
+
+  .ca-form {
+    margin-top: 12px;
+  }
+
+  .ca-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .ca-card-titulo {
+    margin-bottom: 12px;
+    font-size: 1rem;
+  }
+
+  .ca-card-icone {
+    width: 28px;
+    height: 28px;
+  }
+
+  .ca-grade {
+    gap: 12px;
+  }
+
+  /* CNPJ em uma linha; Responsável e Telefone lado a lado */
+  .ca-empresa-resumo {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    padding: 10px 12px;
+  }
+
+  .ca-empresa-resumo > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  /* botão sempre à vista, fixo no rodapé da tela, acima da área de gestos do aparelho */
+  .ca-acoes {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -12px -24px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(to top, #f7f7f7 75%, rgba(247, 247, 247, 0));
+  }
+
+  .ca-btn-iniciar {
+    width: 100%;
+    min-width: 0;
+    padding: 13px;
+  }
 }
 
-.modal-actions .btn-excluir {
-  background-color: #dc3545;
-  color: #fff;
-}
-
-.modal-actions .btn-excluir:hover {
-  background-color: #c82333;
-}
-
-.modal-actions button:disabled {
-  background-color: #6c757d;
-  color: #fff;
-  cursor: not-allowed;
-  opacity: 0.75;
+@media (prefers-reduced-motion: reduce) {
+  .ca-btn-iniciar {
+    transition: none;
+  }
 }

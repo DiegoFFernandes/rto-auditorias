@@ -1,0 +1,18 @@
+.selecionar-empresa-opcao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.selecionar-empresa-opcao strong {
+  font-size: 0.92rem;
+  color: #333;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.selecionar-empresa-opcao small {
+  font-size: 0.75rem;
+  color: #777;
+}

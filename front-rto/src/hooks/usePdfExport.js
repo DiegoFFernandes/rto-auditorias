@@ -3,30 +3,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Chart as ChartJS } from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { getBackgroundColor, getTextColor, getMascoteImage } from "../utils/classificacao";
 
 ChartJS.register(ChartDataLabels);
-
-const getBackgroundColor = (value) => {
-    if (value === null) return '#bfbfbf';
-    if (value >= 80) return '#1ca41c';
-    if (value >= 50) return '#f2c037';
-    return '#dc3545';
-};
-
-const getTextColor = (value) => {
-    if (value === null) return '#333333';
-    if (value >= 80) return '#ffffff';
-    if (value >= 50) return '#333333';
-    return '#ffffff';
-};
-
-const getMascoteImage = (resultado) => {
-    if (resultado === null) return null;
-    const baseUrl = window.location.origin;
-    if (resultado >= 80) return `${baseUrl}/mascote2.png`;
-    if (resultado >= 50) return `${baseUrl}/mascote1.png`;
-    return `${baseUrl}/mascote3.png`;
-};
 
 const toDataURL = (url) => {
     return new Promise((resolve, reject) => {
@@ -262,7 +241,7 @@ const usePdfExport = () => {
 
             chartY += cardPadding + 10;
 
-            const mascoteImagePath = getMascoteImage(overallResult);
+            const mascoteImagePath = getMascoteImage(overallResult, window.location.origin);
             if (mascoteImagePath) {
                 try {
                     const mascoteDataUrl = await toDataURL(mascoteImagePath);

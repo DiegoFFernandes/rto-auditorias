@@ -88,6 +88,7 @@ const Auditorias = () => {
             <hr className="divider" />
             {currentQuestion ? (
               <>
+                <div className="auditoria-corpo">
                 <AuditoriaPerguntas
                   pergunta={currentQuestion}
                   respostaSelecionada={respostas[currentQuestion.id]}
@@ -102,6 +103,7 @@ const Auditorias = () => {
                   handleRemoveFoto={handleRemoveFoto}
                   fileInputRef={fileInputRef}
                 />
+                </div>
                 <AuditoriaNavegacao
                   onVoltar={handleBack}
                   onAvancar={handleNext}
