@@ -132,6 +132,8 @@ const Login = () => {
           <button type="submit" className="login-submit-btn" disabled={isLoading}>
             {isLoading ? 'Entrando...' : 'Entrar'}
           </button>
+
+          <p className="login-versao">v{__APP_VERSION__}</p>
         </form>
       </div>
     </div>
