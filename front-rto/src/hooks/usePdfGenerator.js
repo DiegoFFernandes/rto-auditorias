@@ -8,6 +8,7 @@ import {
   NIVEL_RISCO,
   NIVEL_INACEITAVEL,
 } from "../utils/classificacao";
+import { formatarData } from "../utils/formatarData";
 
 const PDF_IMAGE_MAX_DIMENSION = 1280;
 const PDF_IMAGE_QUALITY = 0.62;
@@ -203,7 +204,7 @@ export const usePdfGenerator = () => {
 
     const dataImpressao = new Date().toLocaleString('pt-BR');
     const dataAuditoria = auditoriaInfo?.dt_auditoria
-      ? new Date(auditoriaInfo.dt_auditoria).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+      ? formatarData(auditoriaInfo.dt_auditoria)
       : '—';
 
     const drawLogo = (x, y, height) => {

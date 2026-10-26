@@ -9,7 +9,8 @@ import BusinessIcon from '@mui/icons-material/Business';
 import PersonIcon from '@mui/icons-material/Person';
 import DescriptionIcon from '@mui/icons-material/Description';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { dataLocal } from '../utils/formatarData';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'react-toastify';
 import api from '../api/api';
@@ -84,7 +85,7 @@ const TabelaAuditoriasFuturas = ({ auditorias, setAuditorias }) => {
                 <TableCell>{auditoria.auditor_nome || 'N/A'}</TableCell>
                 <TableCell>
                   {auditoria.data_auditoria
-                    ? format(parseISO(auditoria.data_auditoria), 'dd/MM/yyyy', { locale: ptBR })
+                    ? format(dataLocal(auditoria.data_auditoria), 'dd/MM/yyyy', { locale: ptBR })
                     : 'N/A'}
                 </TableCell>
                 <TableCell>{auditoria.observacoes || 'Sem observações'}</TableCell>
@@ -122,7 +123,7 @@ const TabelaAuditoriasFuturas = ({ auditorias, setAuditorias }) => {
                     <CalendarMonthIcon color="action" sx={{ mr: 1.5 }} />
                     <Typography variant="body1" color="text.secondary">
                       Data: {auditoria.data_auditoria
-                        ? format(parseISO(auditoria.data_auditoria), "dd 'de' MMMM, yyyy", { locale: ptBR })
+                        ? format(dataLocal(auditoria.data_auditoria), "dd 'de' MMMM, yyyy", { locale: ptBR })
                         : 'N/A'}
                     </Typography>
                   </Box>
