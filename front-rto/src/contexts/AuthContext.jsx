@@ -1,6 +1,24 @@
 import { createContext, useState, useEffect, useContext } from 'react';
+import api from '../api/api';
 
 const AuthContext = createContext(null);
+
+// Atualiza nome e perfil (ADM/AUD) com o que está no banco: se o tipo_usuario mudar,
+// o menu e os botões refletem a mudança sem precisar sair e entrar de novo.
+const atualizarDadosDoBanco = async (dadosAtuais, salvar) => {
+  if (!dadosAtuais?.id) return;
+  try {
+    const { data } = await api.get(`/usuarios/${dadosAtuais.id}`);
+    if (!data) return;
+    const atualizados = { ...dadosAtuais, nome: data.nome, role: data.tipo_usuario };
+    if (atualizados.nome !== dadosAtuais.nome || atualizados.role !== dadosAtuais.role) {
+      salvar(atualizados);
+    }
+  } catch {
+    // Sem conexão ou servidor indisponível: mantém os dados salvos. Token inválido já é
+    // tratado pelo interceptor da API (desloga e leva ao login).
+  }
+};
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -16,6 +34,10 @@ export const AuthProvider = ({ children }) => {
         const parsedUserData = JSON.parse(userDataString);
         setIsAuthenticated(true);
         setUserData(parsedUserData);
+        atualizarDadosDoBanco(parsedUserData, (atualizados) => {
+          localStorage.setItem('userData', JSON.stringify(atualizados));
+          setUserData(atualizados);
+        });
       } catch (error) {
         console.error("Erro ao ler os dados de usuário do localStorage", error);
         localStorage.removeItem('authToken');

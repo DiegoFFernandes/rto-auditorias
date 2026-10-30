@@ -3,6 +3,7 @@ const ArquivosModel = require('../models/Arquivos.Model');
 const TopicosSnapshotModel = require('../models/TopicosSnapshot.Model');
 const PerguntasSnapshotModel = require('../models/PerguntasSnapshot.Model');
 const { caminhoDeFotoValido } = require('./arquivos.service');
+const { podeAlterarAuditoria } = require('../config/regras');
 const connection = require('../database/connection');
 
 const erroHttp = (mensagem, statusCode) => {
@@ -76,7 +77,8 @@ const iniciarAuditoria = async (dados, usuario) => {
   }
 };
 
-// Garante que a auditoria existe, está em andamento e pertence ao usuário (ou ele é ADM).
+// Garante que a auditoria existe e está em andamento. Por padrão qualquer usuário pode alterá-la;
+// a regra "somente o dono (ou ADM)" fica em config/regras.js (AUDITORIA_SOMENTE_DONO).
 const obterAuditoriaEditavel = async (id_auditoria, usuario, conn) => {
   const auditoria = await AuditoriasModel.buscarAuditoriaPorId(id_auditoria, conn, true);
 
@@ -86,7 +88,7 @@ const obterAuditoriaEditavel = async (id_auditoria, usuario, conn) => {
   if (auditoria.st_auditoria !== 'A') {
     throw erroHttp('Esta auditoria já foi finalizada ou cancelada e não pode mais ser alterada.', 409);
   }
-  if (usuario?.role !== 'ADM' && String(auditoria.id_usuario) !== String(usuario?.id)) {
+  if (!podeAlterarAuditoria(usuario, auditoria.id_usuario)) {
     throw erroHttp('Você não tem permissão para alterar esta auditoria.', 403);
   }
   return auditoria;

@@ -1,6 +1,7 @@
 const ArquivosModel = require('../models/Arquivos.Model')
 const cloudinary = require('../config/cloudinary');
 const { extractPublicIdFromUrl } = require('../utils/cloundinary');
+const { podeAlterarAuditoria } = require('../config/regras');
 
 // Só aceita apagar arquivos que pertencem à nossa conta/pasta do Cloudinary,
 // evitando que a rota seja usada para apagar qualquer outra URL ou asset.
@@ -27,15 +28,14 @@ const erroHttp = (mensagem, statusCode) => {
   return error;
 };
 
-// Se a foto já está vinculada a uma auditoria, só o auditor dono (ou ADM) pode apagá-la,
-// e apenas enquanto a auditoria estiver em andamento. Fotos ainda não vinculadas
+// Se a foto já está vinculada a uma auditoria, ela só pode ser apagada enquanto a auditoria estiver em
+// andamento (e, se AUDITORIA_SOMENTE_DONO estiver ligada em config/regras.js, só pelo dono ou ADM). Fotos ainda não vinculadas
 // (upload recente, antes do salvamento do progresso) não têm dono para conferir.
 const validarPermissaoDeExclusao = async (caminhoUrl, usuario) => {
   const vinculo = await ArquivosModel.buscarDonoPorCaminho(caminhoUrl);
   if (!vinculo) return;
 
-  const ehDono = String(vinculo.id_usuario) === String(usuario?.id);
-  if (!ehDono && usuario?.role !== 'ADM') {
+  if (!podeAlterarAuditoria(usuario, vinculo.id_usuario)) {
     throw erroHttp('Você não tem permissão para apagar esta foto.', 403);
   }
   if (vinculo.st_auditoria !== 'A') {
